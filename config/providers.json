@@ -1,0 +1,30 @@
+{
+  "providers": [
+    {
+      "name": "DeepSeek",
+      "env": "DEEPSEEK_API_KEY",
+      "type": "open_weight_provider"
+    },
+    {
+      "name": "Together",
+      "env": "TOGETHER_API_KEY",
+      "type": "open_weight_provider"
+    },
+    {
+      "name": "Fireworks",
+      "env": "FIREWORKS_API_KEY",
+      "type": "open_weight_provider"
+    },
+    {
+      "name": "DeepInfra",
+      "env": "DEEPINFRA_API_KEY",
+      "type": "open_weight_provider"
+    },
+    {
+      "name": "Groq",
+      "env": "GROQ_API_KEY",
+      "type": "open_weight_provider"
+    }
+  ]
+}
+
