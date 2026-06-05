@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+litellm
+redis
+psycopg2-binary
+dodopayments[aiohttp]
+python-dotenv
+PyYAML
+pytest
