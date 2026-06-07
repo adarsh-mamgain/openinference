@@ -1,6 +1,6 @@
 # OpenRouter OSS
 
-Lightweight self-hosted router for open-weight models.
+A lightweight OpenRouter-style router for open-weight models.
 
 ## What is in this repo now
 
@@ -8,23 +8,32 @@ Lightweight self-hosted router for open-weight models.
 - Login page at `/login`
 - Signup page at `/signup`
 - Customer dashboard at `/app`
-- LiteLLM config loader
-- OpenAI-compatible `/v1/chat/completions` entrypoint
-- `/health`, `/v1/models`, `/v1/me`, and `/v1/usage/recent`
-- Docker Compose for app, Redis, and Postgres
-- Dodo Payments client wrapper for checkout/billing flows
+- Session-based customer auth
+- Unlimited API key creation per workspace
+- Credits and usage tracking
+- OpenAI-compatible `/v1/chat/completions`
+- `/v1/models`, `/v1/me`, `/v1/api-keys`, `/v1/usage/recent`
+- Dodo Payments checkout for credit top-ups
+
+## Customer flow
+
+1. Register a workspace.
+2. Log in with email and password.
+3. Load credits through the dashboard.
+4. Create as many API keys as needed.
+5. Use the OpenAI SDK against `/v1` with a generated key.
 
 ## Run locally
 
 1. Copy `.env.example` to `.env` and fill in provider keys.
 2. Install dependencies.
-3. Start the app with Uvicorn.
+3. Start the app.
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-Then open `http://localhost:8000/`.
+Open `http://localhost:8000/`.
 
 ## Payments
 
@@ -42,12 +51,19 @@ For enhanced async performance with aiohttp:
 pip install dodopayments[aiohttp]
 ```
 
-## Customer UI
+## SDK Example
 
-The UI is split into three surfaces:
+```python
+from openai import OpenAI
 
-- landing page for prospective customers
-- login/signup flow for workspace access
-- inner app dashboard for usage, billing, models, and the API console
+client = OpenAI(
+    api_key="or_live_xxx",
+    base_url="http://localhost:8000/v1",
+)
 
-The dashboard uses the same backend APIs the product exposes to customers.
+response = client.chat.completions.create(
+    model="deepseek-v4-flash",
+    messages=[{"role": "user", "content": "Hello"}],
+)
+print(response.choices[0].message.content)
+```
