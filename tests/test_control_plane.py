@@ -1,39 +1,61 @@
 from datetime import datetime, timezone
 
 from app.models.control import UsageRecord, UserRecord
+from app.repositories.api_keys import InMemoryApiKeyRepository
+from app.repositories.sessions import InMemorySessionRepository
 from app.repositories.users import InMemoryUserRepository
 from app.repositories.usage import InMemoryUsageRepository
-from app.services.auth import AuthService, AuthenticationError
+from app.services.auth import AuthService, AuthenticationError, RegistrationError
 from app.services.billing import BillingService
 from app.services.rate_limit import InMemoryRateLimiter
 
 
-def test_authenticate_returns_user() -> None:
-    users = InMemoryUserRepository()
-    users.seed(
-        UserRecord(
-            id='user-1',
-            api_key_fingerprint='ignored',
-            plan='pro',
-            credits_cents=500,
-            rate_limit_per_minute=10,
-            active=True,
-        ),
-        'test-key',
+def make_auth_service() -> AuthService:
+    return AuthService(
+        users=InMemoryUserRepository(),
+        sessions=InMemorySessionRepository(),
+        api_keys=InMemoryApiKeyRepository(),
     )
 
-    auth = AuthService(users=users)
-    user = auth.authenticate('test-key')
 
-    assert user.id == 'user-1'
-    assert user.plan == 'pro'
+def test_register_login_and_api_key_flow() -> None:
+    auth = make_auth_service()
+
+    user, session_token = auth.register(email='owner@example.com', password='secret', name='Owner')
+    assert user.email == 'owner@example.com'
+    assert session_token
+
+    logged_in_user, second_session = auth.login(email='owner@example.com', password='secret')
+    assert logged_in_user.id == user.id
+    assert second_session
+
+    api_key, secret = auth.create_api_key(user_id=user.id, name='Production')
+    assert api_key.name == 'Production'
+    assert secret.startswith('or_live_')
+
+    authenticated = auth.authenticate_api_key(secret)
+    assert authenticated.user.id == user.id
+    assert len(auth.list_api_keys(user.id)) == 1
 
 
-def test_authenticate_rejects_invalid_key() -> None:
-    auth = AuthService(users=InMemoryUserRepository())
+def test_register_rejects_duplicate_email() -> None:
+    auth = make_auth_service()
+    auth.register(email='owner@example.com', password='secret')
 
     try:
-        auth.authenticate('bad-key')
+        auth.register(email='owner@example.com', password='another-secret')
+    except RegistrationError:
+        assert True
+    else:
+        assert False, 'expected RegistrationError'
+
+
+def test_login_rejects_wrong_password() -> None:
+    auth = make_auth_service()
+    auth.register(email='owner@example.com', password='secret')
+
+    try:
+        auth.login(email='owner@example.com', password='wrong')
     except AuthenticationError:
         assert True
     else:

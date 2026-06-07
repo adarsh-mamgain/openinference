@@ -6,28 +6,29 @@ def test_landing_page_contains_customer_ctas() -> None:
 
     assert 'Get access' in html
     assert 'Sign in' in html
-    assert 'OpenAI-compatible' in html
+    assert 'Five OSS models only' in html
 
 
-def test_login_page_contains_access_key_flow() -> None:
+def test_login_page_contains_auth_flow() -> None:
     html = render_login_page()
 
-    assert 'Access key' in html
     assert 'Sign in' in html
-    assert '/app' in html
+    assert 'session cookie' in html
+    assert '/auth/login' in html
 
 
 def test_signup_page_contains_onboarding_fields() -> None:
     html = render_signup_page()
 
-    assert 'Request access' in html
+    assert 'Create workspace' in html
     assert 'Work email' in html
-    assert 'Use case' in html
+    assert 'Password' in html
 
 
 def test_app_page_contains_dashboard_panels() -> None:
     html = render_app_page()
 
     assert 'Workspace overview' in html
-    assert 'Recent usage' in html
-    assert 'API console' in html
+    assert 'API keys' in html
+    assert 'Load credits' in html
+    assert 'SDK quickstart' in html
