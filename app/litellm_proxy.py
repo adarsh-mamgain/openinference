@@ -48,9 +48,22 @@ def build_completion_kwargs(payload: dict[str, Any]) -> dict[str, Any]:
     return completion_kwargs
 
 
-async def proxy_chat_completion(payload: dict[str, Any]) -> Any:
+async def proxy_chat_completion(payload: dict[str, Any]) -> dict[str, Any]:
     if litellm is None:
         raise RuntimeError('litellm is not installed')
 
     completion_kwargs = build_completion_kwargs(payload)
-    return await asyncio.to_thread(litellm.completion, **completion_kwargs)
+    response = await asyncio.to_thread(litellm.completion, **completion_kwargs)
+    return serialize_completion_response(response)
+
+
+def serialize_completion_response(response: Any) -> dict[str, Any]:
+    if isinstance(response, dict):
+        return response
+    if hasattr(response, 'model_dump'):
+        return response.model_dump()  # type: ignore[no-any-return]
+    if hasattr(response, 'dict'):
+        return response.dict()  # type: ignore[no-any-return]
+    if hasattr(response, '__dict__'):
+        return dict(response.__dict__)
+    raise TypeError('Unsupported completion response type')

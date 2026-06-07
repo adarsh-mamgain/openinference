@@ -16,15 +16,21 @@ class AppSettings:
     app_env: str = os.getenv('APP_ENV', 'development')
     host: str = os.getenv('APP_HOST', '0.0.0.0')
     port: int = int(os.getenv('APP_PORT', '8000'))
+    base_url: str = os.getenv('APP_BASE_URL', 'http://localhost:8000')
     redis_host: str = os.getenv('REDIS_HOST', 'localhost')
     redis_port: int = int(os.getenv('REDIS_PORT', '6379'))
     database_url: str = os.getenv(
         'DATABASE_URL',
         'postgresql://user:pass@localhost:5432/oss_router',
     )
-    dev_api_key: str = os.getenv('OPENROUTER_DEV_API_KEY', '')
+    session_cookie_name: str = os.getenv('SESSION_COOKIE_NAME', 'openrouter_session')
+    dev_email: str = os.getenv('OPENROUTER_DEV_EMAIL', '')
+    dev_password: str = os.getenv('OPENROUTER_DEV_PASSWORD', '')
     default_rate_limit_per_minute: int = int(os.getenv('DEFAULT_RATE_LIMIT_PER_MINUTE', '60'))
-    default_credits_cents: int = int(os.getenv('DEFAULT_CREDITS_CENTS', '1000'))
+    default_credits_cents: int = int(os.getenv('DEFAULT_CREDITS_CENTS', '0'))
+    dodo_api_key: str = os.getenv('DODO_PAYMENTS_API_KEY', '')
+    dodo_environment: str = os.getenv('DODO_PAYMENTS_ENVIRONMENT', 'test_mode')
+    dodo_credit_packs_json: str = os.getenv('DODO_CREDIT_PACKS_JSON', '')
     app_root: Path = ROOT
     litellm_config_path: Path = PATHS.litellm_config
     providers_path: Path = PATHS.providers
