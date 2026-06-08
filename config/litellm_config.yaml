@@ -1,19 +1,33 @@
 model_list:
   - model_name: deepseek-v4-flash
     litellm_params:
-      model: deepseek/deepseek-chat
-      api_key: os.environ/DEEPSEEK_API_KEY
+      model: deepseek-ai/DeepSeek-V4-Flash
+      api_key: os.environ/DEEPINFRA_API_KEY
 
-  - model_name: qwen3-32b
+  - model_name: deepseek-v4-pro
     litellm_params:
-      model: fireworks_ai/accounts/fireworks/models/qwen3-32b
-      api_key: os.environ/FIREWORKS_API_KEY
+      model: deepseek-ai/DeepSeek-V4-Pro
+      api_key: os.environ/DEEPINFRA_API_KEY
+
+  - model_name: deepseek-v3.2
+    litellm_params:
+      model: deepseek-ai/DeepSeek-V3.2
+      api_key: os.environ/DEEPINFRA_API_KEY
 
   - model_name: llama-4-scout
     litellm_params:
-      model: together_ai/meta-llama/Llama-4-Scout-109B
-      api_key: os.environ/TOGETHER_API_KEY
+      model: meta-llama/Llama-4-Scout-17B-16E-Instruct
+      api_key: os.environ/DEEPINFRA_API_KEY
+  
+  - model_name: llama-4-maverick
+    litellm_params:
+      model: meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8
+      api_key: os.environ/DEEPINFRA_API_KEY
+
+  - model_name: llama-4-guard
+    litellm_params:
+      model: meta-llama/Llama-Guard-4-12B
+      api_key: os.environ/DEEPINFRA_API_KEY
 
 general_settings:
   completion_model: deepseek-v4-flash
-
