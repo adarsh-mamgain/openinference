@@ -1,34 +1,37 @@
 from app.ui import render_app_page, render_landing_page, render_login_page, render_signup_page
 
 
-def test_landing_page_contains_customer_ctas() -> None:
+def test_landing_page_shows_models_pricing_and_cta() -> None:
     html = render_landing_page()
 
-    assert 'Get access' in html
-    assert 'Sign in' in html
-    assert 'Five OSS models only' in html
+    assert 'Five model families. One endpoint.' in html
+    assert 'Top up credits' in html
+    assert 'Common questions' in html
+    assert 'Start for free' in html
+    assert '/signup' in html
 
 
-def test_login_page_contains_auth_flow() -> None:
+def test_login_page_focuses_on_workspace_access() -> None:
     html = render_login_page()
 
     assert 'Sign in' in html
-    assert 'session cookie' in html
-    assert '/auth/login' in html
+    assert 'Access your workspace, keys, and usage logs.' in html
+    assert 'Create a workspace' in html
 
 
-def test_signup_page_contains_onboarding_fields() -> None:
+def test_signup_page_moves_users_into_funding_flow() -> None:
     html = render_signup_page()
 
     assert 'Create workspace' in html
-    assert 'Work email' in html
-    assert 'Password' in html
+    assert 'No card needed to register.' in html
+    assert 'Usage logs and spend tracking' in html
 
 
-def test_app_page_contains_dashboard_panels() -> None:
+def test_dashboard_page_emphasizes_credits_keys_and_models() -> None:
     html = render_app_page()
 
-    assert 'Workspace overview' in html
-    assert 'API keys' in html
-    assert 'Load credits' in html
-    assert 'SDK quickstart' in html
+    assert 'Top up credits' in html
+    assert 'Available models' in html
+    assert 'API Keys' in html
+    assert 'Python snippet' in html
+    assert 'Recent requests' in html
