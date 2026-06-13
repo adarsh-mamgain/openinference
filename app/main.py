@@ -125,7 +125,7 @@ def landing() -> str:
     return render_landing_page()
 
 
-@app.get('/login', response_class=HTMLResponse)
+@app.get('/login', response_class=HTMLResponse, response_model=None)
 def login_page(request: Request) -> HTMLResponse | RedirectResponse:
     if SETTINGS.session_cookie_name in request.cookies:
         try:
@@ -136,7 +136,7 @@ def login_page(request: Request) -> HTMLResponse | RedirectResponse:
     return HTMLResponse(render_login_page())
 
 
-@app.get('/signup', response_class=HTMLResponse)
+@app.get('/signup', response_class=HTMLResponse, response_model=None)
 def signup_page(request: Request) -> HTMLResponse | RedirectResponse:
     if SETTINGS.session_cookie_name in request.cookies:
         try:
@@ -147,7 +147,7 @@ def signup_page(request: Request) -> HTMLResponse | RedirectResponse:
     return HTMLResponse(render_signup_page())
 
 
-@app.get('/app', response_class=HTMLResponse)
+@app.get('/app', response_class=HTMLResponse, response_model=None)
 def app_page(request: Request) -> HTMLResponse | RedirectResponse:
     try:
         _require_session_user(request)
@@ -156,7 +156,7 @@ def app_page(request: Request) -> HTMLResponse | RedirectResponse:
     return HTMLResponse(render_app_page())
 
 
-@app.get('/ui', response_class=HTMLResponse)
+@app.get('/ui', response_class=HTMLResponse, response_model=None)
 def ui(request: Request) -> HTMLResponse | RedirectResponse:
     return app_page(request)
 

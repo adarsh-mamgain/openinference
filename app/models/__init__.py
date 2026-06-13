@@ -5,6 +5,7 @@ from .schemas import (
     ApiKeyCreatedResponse,
     ApiKeyResponse,
     AuthResponse,
+    ChatCompletionRequest,
     CheckoutRequest,
     CheckoutResponse,
     HealthResponse,
