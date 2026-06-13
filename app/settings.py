@@ -31,7 +31,7 @@ class AppSettings:
     default_credits_cents: int = int(os.getenv('DEFAULT_CREDITS_CENTS', '0'))
     dodo_api_key: str = os.getenv('DODO_PAYMENTS_API_KEY', '')
     dodo_environment: str = os.getenv('DODO_PAYMENTS_ENVIRONMENT', 'test_mode')
-    dodo_product_id: str = os.getenv('DODO_PRODUCT_ID', ''),
+    dodo_product_id: str = os.getenv('DODO_PRODUCT_ID', '')
     dodo_webhook_secret: str = os.getenv('DODO_WEBHOOK_SECRET', '')
     app_root: Path = ROOT
     litellm_config_path: Path = PATHS.litellm_config
