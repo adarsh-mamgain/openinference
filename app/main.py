@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import hashlib
-import hmac
 import json
 from datetime import timezone
 from typing import Any
@@ -359,25 +357,32 @@ async def chat_completions(
 
 @app.post('/webhooks/dodo', response_model=MessageResponse)
 async def dodo_webhook(request: Request) -> MessageResponse:
-    """Verify Dodo Payments webhook signature before touching credits.
+    """Verify Dodo Payments webhook signature via Standard Webhooks spec.
 
-    Dodo sends an ``X-Dodo-Signature`` header containing a hex HMAC-SHA256
-    of the raw request body, keyed with ``DODO_WEBHOOK_SECRET``.
+    Dodo sends ``webhook-id``, ``webhook-signature``, and
+    ``webhook-timestamp`` headers with an HMAC-SHA256 of
+    ``{id}.{timestamp}.{body}``, keyed with ``DODO_WEBHOOK_SECRET``.
 
-    If ``DODO_WEBHOOK_SECRET`` is not configured we skip verification and log
-    a warning.  Set it in production — skipping it is a free-credits exploit.
+    Falls back to skipping verification if the secret is not configured
+    (unsafe — warn and allow, but not for production).
     """
+    from standardwebhooks import Webhook, WebhookVerificationError
+
     raw_body = await request.body()
 
     webhook_secret = getattr(SETTINGS, 'dodo_webhook_secret', '') or ''
     if webhook_secret:
-        expected_sig = hmac.new(
-            webhook_secret.encode(),
-            raw_body,
-            hashlib.sha256,
-        ).hexdigest()
-        received_sig = request.headers.get('x-dodo-signature', '')
-        if not hmac.compare_digest(expected_sig, received_sig):
+        wh = Webhook(webhook_secret)
+        try:
+            wh.verify(
+                raw_body,
+                {
+                    'webhook-id': request.headers.get('webhook-id', ''),
+                    'webhook-signature': request.headers.get('webhook-signature', ''),
+                    'webhook-timestamp': request.headers.get('webhook-timestamp', ''),
+                },
+            )
+        except WebhookVerificationError:
             raise HTTPException(status_code=400, detail='Invalid webhook signature')
     else:
         import logging
@@ -391,17 +396,15 @@ async def dodo_webhook(request: Request) -> MessageResponse:
     except json.JSONDecodeError as exc:
         raise HTTPException(status_code=400, detail='Invalid JSON') from exc
 
-    event_type = payload.get('event_type') or payload.get('type') or ''
-    data = payload.get('data') or payload.get('payload') or payload
+    event_type = payload.get('type', '')
+    data = payload.get('data', payload)
 
-    if 'succeeded' not in event_type and data.get('payment_status') != 'succeeded':
+    if 'succeeded' not in event_type:
         return MessageResponse(message='ignored')
 
-    metadata = data.get('metadata') or payload.get('metadata') or {}
+    metadata = data.get('metadata') or {}
     user_id = metadata.get('user_id')
-    credits_cents = int(
-        metadata.get('credits_cents') or metadata.get('credit_amount_cents') or 0
-    )
+    credits_cents = int(metadata.get('credits_cents', 0))
 
     if user_id and credits_cents > 0:
         CONTROL_PLANE.auth.top_up_credits(user_id, credits_cents)
