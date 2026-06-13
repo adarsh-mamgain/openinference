@@ -275,6 +275,7 @@ def create_checkout(request: Request, payload: CheckoutRequest) -> CheckoutRespo
         amount_cents=payload.amount_cents,
         return_url=f'{SETTINGS.base_url}/app?checkout=success',
         cancel_url=f'{SETTINGS.base_url}/app?checkout=cancelled',
+        user_id=user.id,
     )
     return CheckoutResponse(
         session_id=checkout['session_id'],
