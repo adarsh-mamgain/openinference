@@ -1,11 +1,12 @@
-from dataclasses import dataclass
+from __future__ import annotations
+
 import os
+from dataclasses import dataclass
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 from config.settings import PATHS, ROOT
-
 
 load_dotenv()
 
@@ -31,6 +32,7 @@ class AppSettings:
     dodo_api_key: str = os.getenv('DODO_PAYMENTS_API_KEY', '')
     dodo_environment: str = os.getenv('DODO_PAYMENTS_ENVIRONMENT', 'test_mode')
     dodo_credit_packs_json: str = os.getenv('DODO_CREDIT_PACKS_JSON', '')
+    dodo_webhook_secret: str = os.getenv('DODO_WEBHOOK_SECRET', '')
     app_root: Path = ROOT
     litellm_config_path: Path = PATHS.litellm_config
     providers_path: Path = PATHS.providers
