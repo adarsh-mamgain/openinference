@@ -1,33 +1,70 @@
 model_list:
+  # ── DeepSeek ──────────────────────────────────────────────────────────────
   - model_name: deepseek-v4-flash
     litellm_params:
-      model: deepseek-ai/DeepSeek-V4-Flash
+      model: deepinfra/deepseek-ai/DeepSeek-V4-Flash
       api_key: os.environ/DEEPINFRA_API_KEY
 
   - model_name: deepseek-v4-pro
     litellm_params:
-      model: deepseek-ai/DeepSeek-V4-Pro
+      model: deepinfra/deepseek-ai/DeepSeek-V4-Pro
       api_key: os.environ/DEEPINFRA_API_KEY
 
-  - model_name: deepseek-v3.2
+  - model_name: deepseek-v3
     litellm_params:
-      model: deepseek-ai/DeepSeek-V3.2
+      model: deepinfra/deepseek-ai/DeepSeek-V3
       api_key: os.environ/DEEPINFRA_API_KEY
 
+  # ── Qwen ──────────────────────────────────────────────────────────────────
+  - model_name: qwen3-32b
+    litellm_params:
+      model: deepinfra/Qwen/Qwen3-32B
+      api_key: os.environ/DEEPINFRA_API_KEY
+
+  - model_name: qwen2.5-72b
+    litellm_params:
+      model: deepinfra/Qwen/Qwen2.5-72B-Instruct
+      api_key: os.environ/DEEPINFRA_API_KEY
+
+  # ── Llama ─────────────────────────────────────────────────────────────────
   - model_name: llama-4-scout
     litellm_params:
-      model: meta-llama/Llama-4-Scout-17B-16E-Instruct
-      api_key: os.environ/DEEPINFRA_API_KEY
-  
-  - model_name: llama-4-maverick
-    litellm_params:
-      model: meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8
+      model: deepinfra/meta-llama/Llama-4-Scout-17B-16E-Instruct
       api_key: os.environ/DEEPINFRA_API_KEY
 
-  - model_name: llama-4-guard
+  - model_name: llama-4-maverick
     litellm_params:
-      model: meta-llama/Llama-Guard-4-12B
+      model: deepinfra/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8
+      api_key: os.environ/DEEPINFRA_API_KEY
+
+  - model_name: llama-3.3-70b
+    litellm_params:
+      model: deepinfra/meta-llama/Llama-3.3-70B-Instruct
+      api_key: os.environ/DEEPINFRA_API_KEY
+
+  # ── Mistral ───────────────────────────────────────────────────────────────
+  - model_name: mistral-small-3.1
+    litellm_params:
+      model: deepinfra/mistralai/Mistral-Small-3.1-24B-Instruct-2503
+      api_key: os.environ/DEEPINFRA_API_KEY
+
+  - model_name: mixtral-8x22b
+    litellm_params:
+      model: deepinfra/mistralai/Mixtral-8x22B-Instruct-v0.1
+      api_key: os.environ/DEEPINFRA_API_KEY
+
+  # ── Gemma ─────────────────────────────────────────────────────────────────
+  - model_name: gemma-3-27b
+    litellm_params:
+      model: deepinfra/google/gemma-3-27b-it
+      api_key: os.environ/DEEPINFRA_API_KEY
+
+  - model_name: gemma-3-12b
+    litellm_params:
+      model: deepinfra/google/gemma-3-12b-it
       api_key: os.environ/DEEPINFRA_API_KEY
 
 general_settings:
   completion_model: deepseek-v4-flash
+  # Drop requests that exceed 120s — prevents runaway costs on hung calls
+  request_timeout: 120
