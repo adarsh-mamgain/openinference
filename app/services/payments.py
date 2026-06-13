@@ -10,14 +10,14 @@ except Exception:  # pragma: no cover
 
 from app.settings import SETTINGS
 
-# Minimum top-up: $10
-MIN_CREDITS_CENTS = 1000
+MIN_CREDITS_CENTS = 1000  # $10 minimum
 
 
 @dataclass
 class PaymentService:
     api_key: str
     environment: str = 'test_mode'
+    product_id: str = ''
 
     def _client(self) -> Any:
         if DodoPayments is None:
@@ -28,7 +28,7 @@ class PaymentService:
         )
 
     def is_configured(self) -> bool:
-        return bool(self.api_key)
+        return bool(self.api_key and self.product_id)
 
     def create_credit_checkout(
         self,
@@ -44,32 +44,30 @@ class PaymentService:
             raise ValueError(f'Minimum top-up is ${MIN_CREDITS_CENTS // 100}')
 
         if not self.is_configured():
-            raise RuntimeError('Dodo Payments is not configured (missing DODO_PAYMENTS_API_KEY)')
+            raise RuntimeError(
+                'Dodo Payments not configured. '
+                'Set DODO_PAYMENTS_API_KEY and DODO_PRODUCT_ID in .env'
+            )
 
         client = self._client()
 
-        # Dodo one-time payment — no product ID needed.
-        # amount is in cents, currency USD.
-        response = client.payments.create(
-            billing={
-                'city': '',
-                'country': 'US',
-                'state': '',
-                'street': '',
-                'zipcode': '',
-            },
+        # ProductItemReqParam supports `amount` override when the product
+        # has pay_what_you_want enabled — this lets us do flexible amounts
+        # with a single product instead of one product per price point.
+        response = client.checkout_sessions.create(
+            product_cart=[
+                {
+                    'product_id': self.product_id,
+                    'quantity': 1,
+                    'amount': amount_cents,  # cents, overrides product price
+                }
+            ],
             customer={
                 'email': user_email,
                 'name': user_name or user_email,
             },
-            product_cart=[
-                {
-                    'product_id': self._get_or_create_credit_product(),
-                    'quantity': 1,
-                }
-            ],
-            payment_link=True,
             return_url=return_url,
+            cancel_url=cancel_url,
             metadata={
                 'user_id': user_id,
                 'credits_cents': str(amount_cents),
@@ -77,23 +75,14 @@ class PaymentService:
         )
 
         return {
-            'session_id': getattr(response, 'payment_id', '') or response.get('payment_id', ''),
-            'checkout_url': getattr(response, 'payment_link', '') or response.get('payment_link', ''),
+            'session_id': response.session_id,
+            'checkout_url': response.checkout_url or '',
         }
-
-    def _get_or_create_credit_product(self) -> str:
-        """Return the configured credit product ID from env."""
-        product_id = getattr(SETTINGS, 'dodo_product_id', '') or ''
-        if not product_id:
-            raise RuntimeError(
-                'DODO_PRODUCT_ID not set. '
-                'Create a one-time product in Dodo dashboard and set DODO_PRODUCT_ID in .env'
-            )
-        return product_id
 
 
 def build_payment_service() -> PaymentService:
     return PaymentService(
         api_key=SETTINGS.dodo_api_key,
         environment=SETTINGS.dodo_environment,
+        product_id=getattr(SETTINGS, 'dodo_product_id', ''),
     )
