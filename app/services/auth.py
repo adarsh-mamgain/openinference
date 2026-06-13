@@ -20,6 +20,10 @@ class RegistrationError(RuntimeError):
     pass
 
 
+class InsufficientCreditsError(RuntimeError):
+    pass
+
+
 @dataclass(frozen=True)
 class AuthenticatedUser:
     user: UserRecord
@@ -32,6 +36,8 @@ class AuthService:
     sessions: SessionRepository
     api_keys: ApiKeyRepository
     session_ttl_days: int = 30
+
+    # ── Registration & login ───────────────────────────────────────────────
 
     def register(self, *, email: str, password: str, name: str | None = None) -> tuple[UserRecord, str]:
         normalized_email = self._normalize_email(email)
@@ -67,6 +73,8 @@ class AuthService:
     def logout(self, session_token: str) -> None:
         self.sessions.delete_by_token_hash(self._hash_token(session_token))
 
+    # ── Session auth ───────────────────────────────────────────────────────
+
     def authenticate_session(self, session_token: str) -> UserRecord:
         token_hash = self._hash_token(session_token)
         session = self.sessions.get_by_token_hash(token_hash)
@@ -76,6 +84,8 @@ class AuthService:
         if user is None or not user.active:
             raise AuthenticationError('Invalid or expired session')
         return user
+
+    # ── API key auth ───────────────────────────────────────────────────────
 
     def authenticate_api_key(self, api_key: str) -> AuthenticatedUser:
         key_hash = self._hash_token(api_key)
@@ -88,9 +98,11 @@ class AuthService:
         self.api_keys.touch_last_used(record.id)
         return AuthenticatedUser(user=user, api_key=record)
 
+    # ── API key management ─────────────────────────────────────────────────
+
     def create_api_key(self, *, user_id: str, name: str) -> tuple[ApiKeyRecord, str]:
-        prefix = f"or_{token_urlsafe(6)}"
-        secret = f"or_live_{token_urlsafe(32)}"
+        prefix = f'or_{token_urlsafe(6)}'
+        secret = f'or_live_{token_urlsafe(32)}'
         record = ApiKeyRecord(
             id=str(uuid4()),
             user_id=user_id,
@@ -114,6 +126,8 @@ class AuthService:
             raise AuthenticationError('API key not found')
         return revoked
 
+    # ── Credits ────────────────────────────────────────────────────────────
+
     def top_up_credits(self, user_id: str, amount_cents: int) -> UserRecord:
         if amount_cents <= 0:
             raise ValueError('amount_cents must be positive')
@@ -123,10 +137,43 @@ class AuthService:
         return updated
 
     def debit_credits(self, user_id: str, amount_cents: int) -> UserRecord:
+        """Deduct credits atomically.
+
+        Uses ``users.debit_credits_atomic`` when available (Postgres
+        implementation enforces a floor of 0 via CHECK or CAS).  Falls back
+        to the simple ``update_credits`` path for the InMemory repo used in
+        tests (acceptable — tests don't need concurrent safety).
+
+        Raises:
+            InsufficientCreditsError: if the user's balance would go below 0.
+            AuthenticationError: if the user record is not found.
+        """
+        if amount_cents <= 0:
+            return self._get_user_or_raise(user_id)
+
+        # Prefer the atomic path (Postgres repo exposes this)
+        if hasattr(self.users, 'debit_credits_atomic'):
+            updated = self.users.debit_credits_atomic(user_id, amount_cents)  # type: ignore[attr-defined]
+            if updated is None:
+                raise InsufficientCreditsError('Insufficient credits')
+            return updated
+
+        # Fallback: read-then-write (fine for InMemory / single-threaded tests)
+        user = self._get_user_or_raise(user_id)
+        if user.credits_cents < amount_cents:
+            raise InsufficientCreditsError('Insufficient credits')
         updated = self.users.update_credits(user_id, -amount_cents)
         if updated is None:
             raise AuthenticationError('User not found')
         return updated
+
+    # ── Internal helpers ───────────────────────────────────────────────────
+
+    def _get_user_or_raise(self, user_id: str) -> UserRecord:
+        user = self.users.get_by_id(user_id)
+        if user is None:
+            raise AuthenticationError('User not found')
+        return user
 
     def _create_session(self, user_id: str) -> str:
         token = token_urlsafe(48)
@@ -151,7 +198,7 @@ class AuthService:
 
     @staticmethod
     def _hash_password(password: str, salt: str) -> str:
-        return pbkdf2_hmac('sha256', password.encode('utf-8'), salt.encode('utf-8'), 120_000).hex()
+        return pbkdf2_hmac('sha256', password.encode(), salt.encode(), 120_000).hex()
 
     @classmethod
     def _verify_password(cls, password: str, salt: str, expected_hash: str) -> bool:
@@ -159,4 +206,4 @@ class AuthService:
 
     @staticmethod
     def _hash_token(token: str) -> str:
-        return sha256(token.encode('utf-8')).hexdigest()
+        return sha256(token.encode()).hexdigest()
