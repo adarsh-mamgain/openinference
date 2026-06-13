@@ -37,18 +37,18 @@ Open `http://localhost:8000/`.
 
 ## Payments
 
-This project uses Dodo Payments instead of Stripe.
+This project uses Dodo Payments instead of Stripe. Webhook signatures are verified using the [Standard Webhooks](https://www.standardwebhooks.com/) specification (the SDK ships with built-in support).
 
-Install the SDK:
+Install with all extras:
 
 ```bash
-pip install dodopayments
+pip install "dodopayments[aiohttp,webhooks]"
 ```
 
-For enhanced async performance with aiohttp:
+Or install dependencies individually via `pyproject.toml`:
 
 ```bash
-pip install dodopayments[aiohttp]
+uv sync
 ```
 
 ## SDK Example
