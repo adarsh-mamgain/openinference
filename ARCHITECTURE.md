@@ -91,7 +91,7 @@ openrouter-oss/
 | LLM proxy | LiteLLM 1.87+ |
 | Database | PostgreSQL 16 (psycopg2-binary) |
 | Cache | Redis 8+ (defined, not heavily used) |
-| Payments | Dodo Payments SDK |
+| Payments | Dodo Payments SDK + Standard Webhooks (webhook verification) |
 | Auth | Custom: PBKDF2 (password), SHA256 (tokens) |
 | Testing | pytest |
 | Containerization | Docker + docker-compose |
@@ -237,7 +237,7 @@ All routes defined inline. No route splitting yet (the `routes/` package exists 
 
 | Route | Method | Handler | Description |
 |-------|--------|---------|-------------|
-| `POST /webhooks/dodo` | POST | `dodo_webhook()` | Credit top-up on successful payment |
+| `POST /webhooks/dodo` | POST | `dodo_webhook()` | Credit top-up on successful payment (Standard Webhooks verification) |
 | `GET /health` | GET | `health()` | `{"status": "ok", "service": "OpenRouter OSS"}` |
 
 ---
@@ -307,11 +307,12 @@ flowchart LR
     Dodo -->|checkout_url| Main
     Main -->|redirect| DodoCheckout[Dodo Checkout Page]
     
-    DodoCheckout -->|payment success| DodoWebhook[POST /webhooks/dodo]
-    DodoWebhook --> Meta{metadata.user_id?}
-    Meta -->|yes| TopUp[auth.top_up_credits]
-    TopUp --> UserRepo[(UserRepository)]
-    DodoCheckout -->|return_url| Dashboard
+     DodoCheckout -->|payment success| DodoWebhook[POST /webhooks/dodo]
+     DodoWebhook --> Verify[Standard Webhooks<br/>HMAC-SHA256 verification]
+     Verify --> Meta{metadata.user_id?}
+     Meta -->|yes| TopUp[auth.top_up_credits]
+     TopUp --> UserRepo[(UserRepository)]
+     DodoCheckout -->|return_url| Dashboard
 ```
 
 ---
