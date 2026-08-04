@@ -1,0 +1,26 @@
+inference-server/src/inference_server/mock_model.py
+  s_75456b9a51f68e::t_fa11f4dbcd3bcf 1-27
+inference-server/src/inference_server/schemas.py
+  s_75456b9a51f68e::t_f4e99cd2719055 1-42
+inference-server/src/inference_server/main.py
+  s_75456b9a51f68e::t_d9ce35c0f85f23 6,10
+  s_75456b9a51f68e::t_ec56a44e944ac3 11
+inference-server/src/inference_server/routers/chat.py
+  s_75456b9a51f68e::t_67ef490edd026a 1-42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "556a854d8bf8d7ed68ab83aa5167437eba080dd1",
+  "prompts": {},
+  "sessions": {
+    "s_75456b9a51f68e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03174b5efffeqqR4c2o7wu3Op3",
+        "model": "deepseek-v4-flash-free"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
