@@ -7,9 +7,22 @@ library can talk to this server without changes.
 from pydantic import BaseModel, Field
 
 
+class FunctionCall(BaseModel):
+    name: str
+    arguments: str  # JSON-encoded string, matching OpenAI
+
+
+class ToolCall(BaseModel):
+    id: str
+    type: str = "function"
+    function: FunctionCall
+
+
 class Message(BaseModel):
     role: str = Field(description="One of: system, user, assistant, tool")
     content: str | None = None
+    tool_calls: list[ToolCall] | None = None
+    tool_call_id: str | None = None
 
 
 class ChatCompletionRequest(BaseModel):

@@ -13,7 +13,12 @@ import uuid
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
-from inference_server.mock_model import count_tokens, generate, stream_chunks
+from inference_server.mock_model import (
+    count_tokens,
+    generate,
+    maybe_tool_call,
+    stream_chunks,
+)
 from inference_server.schemas import (
     ChatCompletionChoice,
     ChatCompletionRequest,
@@ -38,6 +43,22 @@ async def create_chat_completion(
 
 
 def _non_streaming_chat_completion(request: ChatCompletionRequest) -> ChatCompletionResponse:
+    if request.tools:
+        tool_call, finish_reason = maybe_tool_call(request.messages, f"call_{uuid.uuid4().hex[:16]}")
+        if tool_call is not None:
+            return ChatCompletionResponse(
+                id=f"chatcmpl-{uuid.uuid4().hex[:24]}",
+                created=int(time.time()),
+                model=request.model,
+                choices=[
+                    ChatCompletionChoice(
+                        message=Message(role="assistant", content=None, tool_calls=[tool_call]),
+                        finish_reason=finish_reason,
+                    )
+                ],
+                usage=Usage(prompt_tokens=0, completion_tokens=0, total_tokens=0),
+            )
+
     completion_text, completion_tokens = generate(
         request.messages, max_tokens=request.max_tokens or 64
     )

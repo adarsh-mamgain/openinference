@@ -35,14 +35,14 @@ Streaming Response
 **Steps**
 
 - [x] 1. Create `todo.md`, `README.md`, `LICENSE.md`
-- [ ] 2. Set up `uv` project (pyproject.toml, deps, .gitignore)
-- [ ] 3. Basic FastAPI app with health check
-- [ ] 4. `POST /v1/chat/completions` (non-streaming)
-- [ ] 5. `POST /v1/embeddings`
-- [ ] 6. Streaming chat completions (SSE)
-- [ ] 7. Authentication (API key)
-- [ ] 8. Rate limiting
-- [ ] 9. Tool calling / function calling
+- [x] 2. Set up `uv` project (pyproject.toml, deps, .gitignore)
+- [x] 3. Basic FastAPI app with health check
+- [x] 4. `POST /v1/chat/completions` (non-streaming)
+- [x] 5. `POST /v1/embeddings`
+- [x] 6. Streaming chat completions (SSE)
+- [x] 7. Authentication (API key)
+- [x] 8. Rate limiting
+- [x] 9. Tool calling / function calling
 
 ## Upcoming Projects
 
