@@ -1,2 +1,3 @@
-def main() -> None:
-    print("Hello from inference-server!")
+"""inference-server: an OpenAI-compatible inference API built with FastAPI."""
+
+__version__ = "0.1.0"
