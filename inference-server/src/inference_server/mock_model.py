@@ -25,3 +25,9 @@ def generate(messages: list[Message], max_tokens: int = 64) -> tuple[str, int]:
     reply = f"Echo: {last_user}"
     completion = reply[: max_tokens * 4]
     return completion, count_tokens(completion)
+
+
+def stream_chunks(messages: list[Message], max_tokens: int = 64) -> list[str]:
+    """Split the full completion into word-level chunks for streaming."""
+    completion, _ = generate(messages, max_tokens=max_tokens)
+    return completion.split(" ")
