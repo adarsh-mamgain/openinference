@@ -13,5 +13,8 @@ class Settings(BaseSettings):
     app_name: str = "inference-server"
     api_key: str = "dev-key"  # any key is accepted when this is unset
 
+    rate_limit_max_requests: int = 100  # per key, per window
+    rate_limit_window_seconds: int = 60
+
 
 settings = Settings()
