@@ -1,0 +1,25 @@
+inference-server/src/inference_server/main.py
+  s_75456b9a51f68e::t_06153951bb0de7 7,12-23,25-28
+inference-server/.env.example
+  s_75456b9a51f68e::t_cb62acf1ee13ee 3-6
+inference-server/src/inference_server/rate_limit.py
+  s_75456b9a51f68e::t_6902c9ce8e8005 1-62
+inference-server/src/inference_server/config.py
+  s_75456b9a51f68e::t_a5db01b318e65b 16-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "a3560a06b9c054864f7d0d8cca88f36a617c3162",
+  "prompts": {},
+  "sessions": {
+    "s_75456b9a51f68e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03174b5efffeqqR4c2o7wu3Op3",
+        "model": "deepseek-v4-flash-free"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
