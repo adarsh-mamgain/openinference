@@ -1,0 +1,23 @@
+README.md
+  s_75456b9a51f68e::t_2952d00b65f0e4 1,3-4,6,8-20,22,24,27,29,32,34-36,38,40
+todo.md
+  s_75456b9a51f68e::t_b3a436a294ebf7 1-58
+LICENSE.md
+  s_75456b9a51f68e::t_d7b7611d768058 1-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "e2e0228c1a1e4dcf1adb7add4a4287bed8d892e0",
+  "prompts": {},
+  "sessions": {
+    "s_75456b9a51f68e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03174b5efffeqqR4c2o7wu3Op3",
+        "model": "deepseek-v4-flash-free"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
