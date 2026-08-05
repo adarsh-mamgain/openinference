@@ -15,6 +15,16 @@ dependencies = [
     "uvicorn[standard]>=0.52.1",
 ]
 
+[dependency-groups]
+dev = [
+    "httpx2",
+]
+
+[tool.uv]
+# Prebuilt CPU wheels for llama-cpp-python; avoids compiling from source.
+# Comment this out if you prefer to build locally.
+extra-index-url = ["https://abetlen.github.io/llama-cpp-python/whl/cpu"]
+
 [build-system]
 requires = ["uv_build>=0.11.19,<0.12.0"]
 build-backend = "uv_build"

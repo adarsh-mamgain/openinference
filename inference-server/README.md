@@ -3,10 +3,11 @@
 An OpenAI-compatible inference API built with FastAPI, from scratch.
 
 Instead of calling OpenAI directly, clients call **this** API and it serves
-responses from a pluggable model backend (here a mock model).
+responses from a real local model — a quantized `Qwen2.5-0.5B-Instruct`
+GGUF file running on CPU via llama-cpp-python.
 
 ```
-Client  →  FastAPI  →  mock model  →  Streaming Response
+Client  →  FastAPI  →  LocalModel (llama.cpp)  →  Streaming Response
 ```
 
 ## What it implements
@@ -19,20 +20,29 @@ Client  →  FastAPI  →  mock model  →  Streaming Response
 
 Features:
 
+- Real local model inference (`Qwen2.5-0.5B-Instruct` Q4_K_M, ~470MB)
 - Streaming chat completions via SSE (Server-Sent Events)
 - Bearer API-key authentication
 - In-memory fixed-window rate limiting
 - Tool / function calling (`get_weather`, `add`)
 
-## Run it
+## Setup
 
 ```bash
 uv sync
+
+# Download the model (~470MB) once
+./scripts/download-model.sh
+
 cp .env.example .env   # optional; defaults are fine for local dev
 uv run uvicorn inference_server.main:app --reload
 ```
 
 Interactive docs: http://localhost:8000/docs
+
+> Model binaries are gitignored. Fresh clones must run
+> `scripts/download-model.sh` first. Set `MODEL_BACKEND=mock` to use the
+> deterministic echo fallback instead of the local model.
 
 ## Try it
 
@@ -41,13 +51,13 @@ Interactive docs: http://localhost:8000/docs
 curl http://localhost:8000/v1/chat/completions \
   -H "Authorization: Bearer dev-key" \
   -H "Content-Type: application/json" \
-  -d '{"model":"mock-model","messages":[{"role":"user","content":"hello"}]}'
+  -d '{"model":"qwen2.5-0.5b-instruct","messages":[{"role":"user","content":"Explain what an API is in one sentence."}]}'
 
 # Streaming chat
 curl -N http://localhost:8000/v1/chat/completions \
   -H "Authorization: Bearer dev-key" \
   -H "Content-Type: application/json" \
-  -d '{"model":"mock-model","messages":[{"role":"user","content":"hello"}],"stream":true}'
+  -d '{"model":"qwen2.5-0.5b-instruct","messages":[{"role":"user","content":"Say hello in 3 words."}],"stream":true}'
 
 # Tool calling
 curl http://localhost:8000/v1/chat/completions \
@@ -71,7 +81,8 @@ src/inference_server/
 ├── auth.py          # Bearer API-key dependency
 ├── rate_limit.py    # fixed-window rate limiter
 ├── schemas.py       # OpenAI-compatible Pydantic models
-├── mock_model.py    # mock LLM backend + tool registry
+├── llm.py           # LocalModel wrapper around llama-cpp-python
+├── mock_model.py    # echo fallback + tool registry
 └── routers/
     ├── chat.py          # POST /v1/chat/completions
     └── embeddings.py    # POST /v1/embeddings
@@ -81,6 +92,8 @@ src/inference_server/
 
 - **HTTP + FastAPI** — request/response modeling, dependency injection
 - **Streaming** — SSE wire format, async generators
-- **Async programming** — `async def`, `asyncio.sleep`, streaming responses
+- **Async programming** — `async def`, `asyncio.to_thread` for blocking
+  CPU-bound inference, why `StopIteration` breaks across thread boundaries
+- **Local inference** — GGUF quantization, llama-cpp, CPU threading
 - **OpenAI API design** — request/response shapes that clients expect
 - **Production API concerns** — auth, rate limiting, tool calling

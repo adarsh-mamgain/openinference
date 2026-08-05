@@ -17,10 +17,7 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
 from inference_server.llm import model
-from inference_server.mock_model import (
-    count_tokens,
-    maybe_tool_call,
-)
+from inference_server.mock_model import maybe_tool_call
 from inference_server.schemas import (
     ChatCompletionChoice,
     ChatCompletionRequest,

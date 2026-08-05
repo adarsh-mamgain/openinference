@@ -43,6 +43,7 @@ Streaming Response
 - [x] 7. Authentication (API key)
 - [x] 8. Rate limiting
 - [x] 9. Tool calling / function calling
+- [x] 10. Serve real local model (Qwen2.5-0.5B GGUF via llama-cpp-python)
 
 ## Upcoming Projects
 
