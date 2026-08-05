@@ -1,0 +1,21 @@
+inference-server/src/inference_server/routers/chat.py
+  s_75456b9a51f68e::t_a9eb0f9a6a6d26 6-8,19,44,47,64-67,87-88,105,108-109,112,119,123
+  s_75456b9a51f68e::t_26a31f982d8b2c 143-150
+  s_75456b9a51f68e::t_1422055eb05a17 106-107,110-111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "a6a0c271398fb31d138e621bddbf1472f4b67edd",
+  "prompts": {},
+  "sessions": {
+    "s_75456b9a51f68e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03174b5efffeqqR4c2o7wu3Op3",
+        "model": "deepseek-v4-flash-free"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
