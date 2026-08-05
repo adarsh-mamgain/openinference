@@ -1,0 +1,29 @@
+inference-server/pyproject.toml
+  s_75456b9a51f68e::t_adc825694d1b63 18-27
+inference-server/src/inference_server/routers/chat.py
+  s_75456b9a51f68e::t_82321ca8758954 20
+todo.md
+  s_75456b9a51f68e::t_d15f345d5662f6 46
+inference-server/README.md
+  s_75456b9a51f68e::t_2186b0021d4589 6-7,10,23,29,33-36,43-46,54,60,84-85,95-97
+inference-server/.env.example
+  s_75456b9a51f68e::t_118ac265b94ae8 7-12
+inference-server/uv.lock
+  s_75456b9a51f68e::t_e0364d9e868a57 95-107,151-166,188-192,202-204,220,228-237,657-665
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "e5a219637d245e813b81fe967947ea4082bbd6c0",
+  "prompts": {},
+  "sessions": {
+    "s_75456b9a51f68e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03174b5efffeqqR4c2o7wu3Op3",
+        "model": "deepseek-v4-flash-free"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
