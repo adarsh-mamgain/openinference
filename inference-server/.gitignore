@@ -1,3 +1,6 @@
+# Models (large binaries, download via scripts/download-model.sh)
+models/*.gguf
+
 # Virtual environments
 .venv/
 
