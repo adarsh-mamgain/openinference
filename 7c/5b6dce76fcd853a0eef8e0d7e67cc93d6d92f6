@@ -1,0 +1,22 @@
+inference-server/src/inference_server/llm.py
+  s_75456b9a51f68e::t_dc87875c45f548 11-13
+  s_75456b9a51f68e::t_71e1544dec2ecd 1-10,14-92
+inference-server/src/inference_server/config.py
+  s_75456b9a51f68e::t_bf5c37f955166a 19-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "7c5b6dce76fcd853a0eef8e0d7e67cc93d6d92f6",
+  "prompts": {},
+  "sessions": {
+    "s_75456b9a51f68e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03174b5efffeqqR4c2o7wu3Op3",
+        "model": "deepseek-v4-flash-free"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
