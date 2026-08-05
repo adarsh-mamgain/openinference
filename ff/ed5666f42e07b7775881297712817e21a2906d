@@ -1,0 +1,21 @@
+inference-server/pyproject.toml
+  s_75456b9a51f68e::t_b6b86cd582427c 12
+inference-server/uv.lock
+  s_75456b9a51f68e::t_a3935dd210d3e0 4-7,61-69,153,162,168-402
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "ffed5666f42e07b7775881297712817e21a2906d",
+  "prompts": {},
+  "sessions": {
+    "s_75456b9a51f68e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_03174b5efffeqqR4c2o7wu3Op3",
+        "model": "deepseek-v4-flash-free"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
