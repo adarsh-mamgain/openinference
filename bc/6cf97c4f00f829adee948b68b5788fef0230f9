@@ -1,0 +1,26 @@
+inference-server/scripts/download-model.sh
+  s_890e65a059d2f1::t_ae17b4816d2c5d 1-26
+inference-server/nixpacks.toml
+  s_890e65a059d2f1::t_32e50ec46d59f3 1-18
+inference-server/README.md
+  s_890e65a059d2f1::t_4c7e901c400cd3 23
+  s_890e65a059d2f1::t_2bcf4e895d66d2 123-125
+  s_890e65a059d2f1::t_0023ae78dce9db 34,47-79
+  s_890e65a059d2f1::t_3d2d5d299fd2bd 80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "bc6cf97c4f00f829adee948b68b5788fef0230f9",
+  "prompts": {},
+  "sessions": {
+    "s_890e65a059d2f1": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_02504586affegHJ0f7AwRkyMUe",
+        "model": "deepseek-v4-flash-free"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
