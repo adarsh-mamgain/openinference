@@ -1,0 +1,18 @@
+# Nixpacks build configuration — used by Coolify's Nixpacks builder.
+#
+# Build flow:
+#   1. setup   — Python 3.11 from `.python-version`, plus `curl`
+#   2. install — `uv sync --no-dev --frozen` (uses the prebuilt llama-cpp-python
+#                CPU wheel pinned in uv.lock — no source compilation)
+#   3. build   — download the GGUF model into the image so it is always present
+#   4. start   — uvicorn on $PORT (Coolify sets PORT)
+
+[phases.setup]
+nixPkgs = ['...', 'curl']
+
+[phases.build]
+dependsOn = ['install']
+cmds = ['bash scripts/download-model.sh']
+
+[start]
+cmd = 'uvicorn inference_server.main:app --host 0.0.0.0 --port ${PORT:-8000}'

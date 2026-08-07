@@ -20,7 +20,7 @@ Client  →  FastAPI  →  LocalModel (llama.cpp)  →  Streaming Response
 
 Features:
 
-- Real local model inference (`Qwen2.5-0.5B-Instruct` Q4_K_M, ~470MB)
+- Real local model inference (`Qwen2.5-0.5B-Instruct` Q4_K_M, ~490MB)
 - Streaming chat completions via SSE (Server-Sent Events)
 - Bearer API-key authentication
 - In-memory fixed-window rate limiting
@@ -31,7 +31,7 @@ Features:
 ```bash
 uv sync
 
-# Download the model (~470MB) once
+# Download the model (~490MB) once
 ./scripts/download-model.sh
 
 cp .env.example .env   # optional; defaults are fine for local dev
@@ -43,6 +43,40 @@ Interactive docs: http://localhost:8000/docs
 > Model binaries are gitignored. Fresh clones must run
 > `scripts/download-model.sh` first. Set `MODEL_BACKEND=mock` to use the
 > deterministic echo fallback instead of the local model.
+
+## Deploy to Coolify (Nixpacks)
+
+The repo ships a `nixpacks.toml` so Coolify's Nixpacks builder builds and runs
+the app without a Dockerfile:
+
+1. **Add a resource** → **Public Repository** → point at this repo
+   (`inference-server/` directory).
+2. **Build Pack**: `Nixpacks`.
+3. Add env vars under **Environment Variables**:
+   - `API_KEY` — your real key (do not use the `dev-key` default)
+   - `MODEL_BACKEND=local`
+   - `MODEL_PATH=models/qwen2.5-0.5b-instruct-q4_k_m.gguf`
+   - `MODEL_CTX=512` and `MODEL_THREADS=2` are sane defaults for a shared
+     4-core box — tune if you have headroom.
+4. Deploy. The build downloads the ~490MB GGUF into the image, then starts
+   `uvicorn` on `$PORT` (Coolify sets this).
+
+**How the build works** (`nixpacks.toml`):
+
+- `setup` — Python 3.11 (from `.python-version`) + `curl`
+- `install` — `uv sync --no-dev --frozen`, which installs the prebuilt
+  `llama-cpp-python` CPU wheel pinned in `uv.lock` (no source compilation, so
+  builds are fast and don't need a huge toolchain)
+- `build` — `scripts/download-model.sh` bakes the model into the image
+- `start` — `uvicorn inference_server.main:app --host 0.0.0.0 --port ${PORT:-8000}`
+
+Notes:
+
+- The whole build is CPU-only; it needs no GPU.
+- On a 7.5GB box shared with other apps, ~490MB of model weights + a 512-token
+  context leaves plenty of headroom. `MODEL_THREADS=2` keeps llama.cpp from
+  hogging all cores.
+- Health check: `/health` (Coolify can use it for the readiness probe).
 
 ## Try it
 
@@ -86,6 +120,9 @@ src/inference_server/
 └── routers/
     ├── chat.py          # POST /v1/chat/completions
     └── embeddings.py    # POST /v1/embeddings
+scripts/
+└── download-model.sh # fetches the GGUF weights
+nixpacks.toml         # Coolify / Nixpacks build config
 ```
 
 ## Concepts learned
