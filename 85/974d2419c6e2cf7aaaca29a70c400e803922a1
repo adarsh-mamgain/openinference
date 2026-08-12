@@ -1,0 +1,46 @@
+scheduler/src/scheduler/store.py
+  s_633a4eac2db235::t_5bf19931be4afc 1-58
+scheduler/src/scheduler/schemas.py
+  s_633a4eac2db235::t_d68678d7a43798 1-55
+scheduler/.python-version
+  s_633a4eac2db235::t_09f677887429e9 1
+scheduler/.gitignore
+  s_633a4eac2db235::t_4e64df70a06ba7 1-19
+scheduler/src/scheduler/config.py
+  s_633a4eac2db235::t_df773b763a11e7 1-25
+scheduler/src/scheduler/scheduler.py
+  s_633a4eac2db235::t_412513dfd5aea2 60-62
+  s_633a4eac2db235::t_7eecc4cffd0a25 38
+  s_633a4eac2db235::t_d229b6bba56f12 65,68-69,76-77
+  s_633a4eac2db235::t_8b14899600cb25 1-37,39-59,63-64,66-67,70,72-75,78-144
+  s_633a4eac2db235::t_dae594a6cc7ac6 71
+scheduler/src/scheduler/backend.py
+  s_633a4eac2db235::t_4f24023f540dce 1-42
+scheduler/src/scheduler/__init__.py
+  s_633a4eac2db235::t_6bb6b7c001af26 1
+scheduler/pyproject.toml
+  s_633a4eac2db235::t_b3ce0ae822a60f 30
+  s_633a4eac2db235::t_98c54dfb8fa098 21
+  s_633a4eac2db235::t_02d96e563daff6 1-20,22-29
+scheduler/src/scheduler/queue.py
+  s_633a4eac2db235::t_97bda3a14dccaf 1-72,74
+  s_633a4eac2db235::t_3f9121c4e10930 73,75-82
+scheduler/uv.lock
+  s_633a4eac2db235::t_c685713af4781b 1-791
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "85974d2419c6e2cf7aaaca29a70c400e803922a1",
+  "prompts": {},
+  "sessions": {
+    "s_633a4eac2db235": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_00b48a0d1ffeA9gZlN1PE6kMBh",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
