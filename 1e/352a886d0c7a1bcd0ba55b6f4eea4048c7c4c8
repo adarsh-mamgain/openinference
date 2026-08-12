@@ -1,0 +1,32 @@
+scheduler/tests/test_api.py
+  s_633a4eac2db235::t_0700bfae7ca3b0 1-2,6,12-14,18-23,26-35,39,44,46-47,52,55,58,60,68-73,79,84-88,92-96,101-103,111-113,116,125-129,132,140,147,149
+  s_633a4eac2db235::t_d24cb06d369573 5
+  s_633a4eac2db235::t_eb65c7453b1869 98-100,104-110
+  s_633a4eac2db235::t_146842c5b4c1fe 150
+  s_633a4eac2db235::t_8d6ec8c4703fc5 15,45,48-51,53,56-57,59,61-65
+  s_633a4eac2db235::t_e79109f4b77273 114-115,117-119
+  s_633a4eac2db235::t_6142324282d8e1 78,97,124,139,146
+  s_633a4eac2db235::t_a262b5dc801d70 24,36-38
+  s_633a4eac2db235::t_a5f9c784f56764 25
+  s_633a4eac2db235::t_0e811d682c6885 66-67
+scheduler/tests/test_scheduler.py
+  s_633a4eac2db235::t_d2210216dfb696 1-6,9-10,14-15,20-21,23-50,52-70,73-74,77-87,89-92,95-105,107-110,114-116,119-121,123-127,133-135,138-139,141-147,153-155,158-168,170-172,178-180,183-186,188,190-191,197-199,202-203,206-208,211,213,219-221,224-244
+  s_633a4eac2db235::t_c7064492bde29c 51
+  s_633a4eac2db235::t_2ab32fa9a88c31 19,22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "1e352a886d0c7a1bcd0ba55b6f4eea4048c7c4c8",
+  "prompts": {},
+  "sessions": {
+    "s_633a4eac2db235": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_00b48a0d1ffeA9gZlN1PE6kMBh",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
