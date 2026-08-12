@@ -1,0 +1,39 @@
+scheduler/src/scheduler/scheduler.py
+  s_633a4eac2db235::t_69c1e1c63353c8 1,3-6,8,10-14,16-18,23,27-32,35,37,43,77-100,106-108,123-151,190-191,195-218,272
+scheduler/pyproject.toml
+  s_633a4eac2db235::t_0affcb49a7cb95 4,12
+inference-server/pyproject.toml
+  s_633a4eac2db235::t_7f02caba1f5174 15,29-30
+  s_633a4eac2db235::t_d39e9b2b101455 31
+scheduler/src/scheduler/store.py
+  s_633a4eac2db235::t_955344bb77b028 6-8
+  s_633a4eac2db235::t_a92ff376446783 50
+inference-server/src/inference_server/main.py
+  s_633a4eac2db235::t_8b6dff15a8c4ff 3-4,13-23,25
+scheduler/src/scheduler/schemas.py
+  s_633a4eac2db235::t_0834fa9d0874ea 1,5-6,32
+  s_633a4eac2db235::t_13887699249831 12,36-37,51
+  s_633a4eac2db235::t_79cced9b237fef 9
+inference-server/src/inference_server/routers/chat.py
+  s_633a4eac2db235::t_f80b10810c2c1c 3-8,28,45,50-54,56-62,66,69,87,89-95,112,119
+scheduler/src/scheduler/config.py
+  s_633a4eac2db235::t_bf32227f54c2e8 1-5
+uv.lock
+  s_633a4eac2db235::t_84aeffe1c4b9a9 202,217,757,771
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "bca4d204191aeda8abba5ecd72a8ec149ab04367",
+  "prompts": {},
+  "sessions": {
+    "s_633a4eac2db235": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_00b48a0d1ffeA9gZlN1PE6kMBh",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
