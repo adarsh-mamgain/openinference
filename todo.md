@@ -55,21 +55,24 @@ Streaming Response
 
 The "Scheduler" layer between clients and the model. Requests enter a priority
 queue and a bounded pool of async workers drain it in priority-then-FIFO order,
-with bounded concurrency and backpressure. It now runs real inference against
-the inference-server's local model via a uv workspace.
+with bounded concurrency and backpressure. It is now an **internal library**
+inside the inference-server (no HTTP API of its own) that runs real inference
+against the inference-server's local model via a uv workspace.
 
 **Architecture**
 
 ```
 Client
   ↓
-FastAPI (submit / status / cancel / stream)
-  ↓
+inference-server (FastAPI — the only API surface)
+  ↓ scheduler.submit_chat(...)
 PriorityQueue (asyncio min-heap)
   ↓
 Worker Pool (async, bounded)
   ↓
-inference_server.llm.model → Result / SSE stream
+inference_server.llm.model → result / token deltas
+  ↓
+OpenAI response / SSE stream
 ```
 
 **What we learn**
@@ -78,8 +81,8 @@ inference_server.llm.model → Result / SSE stream
 - Scheduling policies (priority-then-FIFO)
 - Async worker pools & bounded concurrency
 - Backpressure (bounded queue, blocking put)
-- Streaming / pub-sub (event bus → SSE)
-- Monorepo integration (uv workspace, cross-package import of the model)
+- Streaming / pub-sub (in-process event bus, `async for`)
+- Library vs service architecture (an internal library with no HTTP surface)
 
 **Steps**
 
@@ -94,7 +97,10 @@ inference_server.llm.model → Result / SSE stream
 - [x] 9. Docs (README, root README, roadmap)
 - [x] 10. Integrate with inference-server (uv workspace; drop Backend/mock;
        worker calls `inference_server.llm.model`)
-- [x] 11. Streaming jobs (event bus + `GET /v1/jobs/{id}/stream` SSE)
+- [x] 11. Streaming jobs (event bus + SSE)
+- [x] 12. Refactor to an internal library: drop the scheduler's own HTTP API;
+       expose `submit_chat` / `job.done` / `subscribe_stream`; wire the
+       inference-server chat router to run through the scheduler
 
 ## Upcoming Projects
 

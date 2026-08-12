@@ -1,105 +1,80 @@
 # scheduler
 
-A priority-queue request scheduler that fronts the **inference-server's real
-local model**. Part of the `openinference` monorepo (uv workspace). Instead of
-every request hitting the model directly, clients submit chat-completion
-**jobs** into an in-memory priority queue; a bounded pool of async workers
-drains the queue in priority-then-FIFO order, runs the model, and streams
-tokens back.
+A **priority-queue scheduler library** used inside the
+[inference-server](../inference-server/). It is an internal layer between the
+HTTP API and the model: the inference-server's chat router submits chat requests
+as jobs; a bounded pool of async workers drains the queue in priority-then-FIFO
+order, runs the real model, and streams tokens back. It exposes **no HTTP API of
+its own** — the inference-server remains the single interface clients talk to.
 
 ```
-Client → FastAPI (POST /v1/jobs) → PriorityQueue → workers (async)
-        → inference_server.llm.model (Qwen2.5) → result / SSE stream
+Client → inference-server (POST /v1/chat/completions)
+              ↓ scheduler.submit_chat(...)
+              PriorityQueue (asyncio min-heap)
+              ↓ worker pool (async, bounded)
+              inference_server.llm.model (Qwen2.5)
+              ↓ result / SSE stream → OpenAI response
 ```
 
-## What it implements
+## What it provides (library API)
 
-| Endpoint | Description |
-|----------|-------------|
-| `GET /health` | Health + queue/worker stats |
-| `POST /v1/jobs` | Submit a chat-completion job into the priority queue (202) |
-| `GET /v1/jobs` | List jobs (active first, then history) |
-| `GET /v1/jobs/{id}` | Fetch one job's status + result |
-| `GET /v1/jobs/{id}/stream` | SSE stream of token deltas for a streaming job |
-| `DELETE /v1/jobs/{id}` | Cancel a queued job |
+```python
+from scheduler.scheduler import Scheduler
+
+scheduler = Scheduler(num_workers=2)     # bounded concurrency
+await scheduler.start()                  # spawn the worker tasks
+
+# Non-streaming: await completion, read the result
+job = await scheduler.submit_chat(messages=[{"role": "user", "content": "hi"}])
+await job.done.wait()                    # asyncio.Event set when finished
+text = job.result
+
+# Streaming: consume token deltas
+job = await scheduler.submit_chat(messages=[...], max_tokens=32, stream=True)
+async for delta in scheduler.subscribe_stream(job.id):
+    print(delta, end="")
+
+await scheduler.stop()
+```
 
 Features:
 
-- **Priority then FIFO** scheduling — lower `priority` value runs first; equal
-  priorities run in arrival order (min-heap with a sequence tiebreaker)
+- **Priority then FIFO** — lower `priority` runs first; equal priorities run in
+  arrival order (min-heap with a sequence tiebreaker)
 - **Bounded async worker pool** — `NUM_WORKERS` jobs generate concurrently
-- **Backpressure** — a bounded queue; submits block until capacity frees up
-- **Cancellation** — queued jobs can be cancelled (lazy-tombstone heap removal)
-- **Real inference** — jobs run against `inference_server.llm.model`
-- **Streaming** — token deltas are fanned out over an in-process event bus to
-  the SSE endpoint
+- **Backpressure** — a bounded queue; `submit_chat` blocks until capacity frees
+- **Cancellation** — `cancel(job_id)` removes a still-queued job (lazy-tombstone
+  heap removal)
+- **Real inference** — workers call `inference_server.llm.model`, including the
+  model-driven tool-calling loop and token-level streaming
+
+## Wiring into the inference-server
+
+The inference-server owns the scheduler's life cycle: its FastAPI lifespan calls
+`await scheduler.start()` / `await scheduler.stop()`, and its chat router uses
+`submit_chat` + `job.done` + `subscribe_stream`. See
+`inference-server/src/inference_server/routers/chat.py`.
 
 ## Setup (uv workspace)
 
 The monorepo root is a uv workspace containing `inference-server` and
-`scheduler`, so the scheduler depends on the real model directly.
+`scheduler`; each depends on the other as a workspace member.
 
 ```bash
-uv sync --all-packages   # from the repo root; installs both packages
+uv sync --all-packages   # from the repo root
 ```
-
-Run the scheduler (point the model at the GGUF weights):
-
-```bash
-cd scheduler
-cp .env.example .env
-uv run uvicorn scheduler.main:app --reload
-```
-
-Interactive docs: http://localhost:8000/docs
-
-## Try it
-
-```bash
-# Submit a chat job (lower priority number = higher priority)
-curl -X POST http://localhost:8000/v1/jobs \
-  -H "Content-Type: application/json" \
-  -d '{"messages":[{"role":"user","content":"Explain an API in one sentence."}],"priority":0}'
-
-# Submit a streaming job, then watch token deltas
-curl -X POST http://localhost:8000/v1/jobs \
-  -H "Content-Type: application/json" \
-  -d '{"messages":[{"role":"user","content":"Count 1 2 3."}],"stream":true}'
-curl -N http://localhost:8000/v1/jobs/<job_id>/stream
-
-# Status / result (archived jobs return 404 and appear in /v1/jobs history)
-curl http://localhost:8000/v1/jobs/<job_id>
-
-# Cancel a queued job
-curl -X DELETE http://localhost:8000/v1/jobs/<job_id>
-
-# Queue stats
-curl http://localhost:8000/health
-```
-
-## Scheduling policy
-
-Jobs live in a binary min-heap keyed by `(priority, seq)`, so:
-
-1. the job with the **lowest `priority`** runs first;
-2. among equal priorities, the **earlier-submitted** job (lower `seq`) runs
-   first — stable FIFO.
-
-Every worker pops from the same heap, so priority is respected globally rather
-than per-worker. Bounded workers + a bounded queue mean load above capacity
-backs up instead of overwhelming the model.
 
 ## Project layout
 
 ```
 src/scheduler/
-├── main.py        # FastAPI app + endpoints + streaming SSE
-├── config.py      # settings from env
-├── schemas.py     # job = chat request (reuses inference_server Message)
-├── store.py       # job registry + bounded history
+├── __init__.py    # package marker
+├── config.py      # worker pool settings (env)
+├── schemas.py     # Job = chat request (reuses inference_server Message)
+├── store.py       # job registry + bounded history + per-job done Event
 ├── queue.py       # asyncio min-heap priority queue (FIFO tie-break + cancel)
-├── events.py      # stream event bus (token deltas → SSE subscribers)
-└── scheduler.py   # worker pool + dispatch, calls inference_server.llm.model
+├── events.py      # stream event bus (token deltas → subscribers)
+└── scheduler.py   # the Scheduler class (worker pool + dispatch + library API)
 ```
 
 ## Concepts learned
@@ -108,5 +83,6 @@ src/scheduler/
 - **Scheduling policies** — priority-then-FIFO, global priority via shared heap
 - **Async worker pools** — `asyncio.create_task`, bounded concurrency
 - **Backpressure** — bounded queues, blocking `put` under load
-- **Streaming / pub-sub** — in-process event bus, SSE fan-out to subscribers
-- **Monorepo integration** — uv workspace, cross-package import of the model
+- **Streaming / pub-sub** — in-process event bus, `async for` fan-out
+- **Monorepo architecture** — an *internal library* (no HTTP surface) consumed
+  by a service, sharing schemas across packages
