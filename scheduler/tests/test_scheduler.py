@@ -1,180 +1,246 @@
-"""Tests for the scheduler core (priority, FIFO, concurrency, cancel, lifecycle)."""
+"""Tests for the scheduler core (priority, FIFO, concurrency, backpressure,
+cancel, completion, streaming).
+
+Inference is exercised through a fake model injected into the scheduler module,
+so tests are deterministic and don't load llama-cpp or touch the real weights.
+"""
 
 import asyncio
+import threading
+import time
 
 import pytest
 
-from scheduler.backend import Backend
-from scheduler.schemas import Job, JobPayload, JobStatus
+import scheduler.scheduler as sched_module
+from scheduler.schemas import JobStatus
 from scheduler.scheduler import Scheduler
 
 
-def payload(task: str) -> JobPayload:
-    return JobPayload(task=task, seconds=0.01)
+def chat(messages: list[dict], priority: int = 0, stream: bool = False):
+    from scheduler.schemas import JobSubmitRequest
+
+    return JobSubmitRequest(messages=messages, priority=priority, stream=stream)
 
 
-class GatedBackend(Backend):
-    """Records the order in which jobs start executing, then blocks until
-    released, so tests can assert on deterministic scheduling order."""
+class FakeModel:
+    """Minics inference_server.llm.model with configurable timing and gating."""
 
-    def __init__(self) -> None:
-        self.start_order: list[str] = []  # job ids in the order execution started
-        self.gates: dict[str, asyncio.Event] = {}
-        self.started = asyncio.Event()
+    def __init__(self, delay: float = 0.01) -> None:
+        self.delay = delay
+        self.start_order: list[str] = []
+        self._active = 0
+        self._max_active = 0
+        self.gates: dict[str, threading.Event] = {}
+        self._lock = threading.Lock()
 
-    async def execute(self, job: Job) -> str:
-        self.start_order.append(job.id)
-        if job.id not in self.gates:
-            self.gates[job.id] = asyncio.Event()
-        self.started.set()
-        await self.gates[job.id].wait()
-        return f"done:{job.id}"
+    def generate(self, messages, max_tokens, tools=None):
+        content = messages[-1].content or ""
+        with self._lock:
+            self._active += 1
+            self._max_active = max(self._max_active, self._active)
+            self.start_order.append(content)
+        gate = self.gates.setdefault(content, threading.Event())
+        gate.wait(timeout=self.delay)  # releases immediately if already set
+        with self._lock:
+            self._active -= 1
+        return f"done:{content}", None, "stop"
 
-
-async def wait_until(predicate, timeout: float = 3.0) -> bool:
-    deadline = asyncio.get_event_loop().time() + timeout
-    while asyncio.get_event_loop().time() < deadline:
-        if predicate():
-            return True
-        await asyncio.sleep(0.005)
-    return False
-
-
-async def release_all(backend: GatedBackend) -> None:
-    for gate in backend.gates.values():
-        gate.set()
+    def stream(self, messages, max_tokens, tools=None):
+        content = messages[-1].content or ""
+        yield f"hi {content}"
+        time.sleep(0.05)
+        yield f" bye {content}"
 
 
-async def auto_release(backend: GatedBackend):
-    """Release each job's gate right after it starts, so a single worker can
-    move on to the next job (order is already recorded before release)."""
-    while True:
-        for gate in backend.gates.values():
+@pytest.fixture()
+def fake_model_factory():
+    original = sched_module.model
+    made: list[FakeModel] = []
+
+    def factory(**kw):
+        fake = FakeModel(**kw)
+        made.append(fake)
+        sched_module.model = fake
+        return fake
+
+    yield factory
+    sched_module.model = original
+    for fake in made:
+        for gate in fake.gates.values():
             gate.set()
-        await asyncio.sleep(0.005)
+
+
+def user(content: str):
+    return {"role": "user", "content": content}
 
 
 @pytest.mark.asyncio
-async def test_priority_schedules_highest_first():
-    """With one worker, jobs start in priority order: lowest number first."""
-    backend = GatedBackend()
-    sched = Scheduler(num_workers=1, backend=backend)
+async def test_priority_schedules_highest_first(fake_model_factory):
+    fake = fake_model_factory()
+    sched = Scheduler(num_workers=1)
     await sched.start()
     try:
-        low = await sched.submit(payload("low"), priority=10)
-        high = await sched.submit(payload("high"), priority=0)
-        medium = await sched.submit(payload("medium"), priority=5)
+        low = sched.store.create(chat([user("low")], priority=10))
+        high = sched.store.create(chat([user("high")], priority=0))
+        medium = sched.store.create(chat([user("medium")], priority=5))
+        for j in (low, high, medium):
+            await sched.submit(j)
 
-        releaser = asyncio.create_task(auto_release(backend))
-        await wait_until(lambda: len(backend.start_order) == 3)
-        releaser.cancel()
-
-        assert backend.start_order == [high.id, medium.id, low.id]
+        await asyncio.sleep(0.1)
+        assert fake.start_order == ["high", "medium", "low"]
     finally:
         await sched.stop()
 
 
 @pytest.mark.asyncio
-async def test_fifo_among_equal_priorities():
-    """Equal priorities start in submission (FIFO) order."""
-    backend = GatedBackend()
-    # Enough workers that all three can start; start order is still queue order.
-    sched = Scheduler(num_workers=3, backend=backend)
+async def test_fifo_among_equal_priorities(fake_model_factory):
+    fake = fake_model_factory()
+    sched = Scheduler(num_workers=1)
     await sched.start()
     try:
-        a = await sched.submit(payload("a"), priority=0)
-        b = await sched.submit(payload("b"), priority=0)
-        c = await sched.submit(payload("c"), priority=0)
+        jobs = [
+            sched.store.create(chat([user(f"m{i}")], priority=0)) for i in range(3)
+        ]
+        for j in jobs:
+            await sched.submit(j)
 
-        await wait_until(lambda: len(backend.start_order) == 3)
-        assert backend.start_order == [a.id, b.id, c.id]
-
-        await release_all(backend)
-        await wait_until(lambda: sched.queue_size == 0)
+        await asyncio.sleep(0.1)
+        assert fake.start_order == ["m0", "m1", "m2"]
     finally:
         await sched.stop()
 
 
 @pytest.mark.asyncio
-async def test_job_completes_and_is_recorded():
-    backend = GatedBackend()
-    sched = Scheduler(num_workers=1, backend=backend)
+async def test_bounded_concurrency(fake_model_factory):
+    fake = fake_model_factory(delay=0.2)
+    sched = Scheduler(num_workers=2)
     await sched.start()
     try:
-        job = await sched.submit(payload("x"), priority=0)
-        await wait_until(lambda: job.id in backend.gates)
-        backend.gates[job.id].set()
+        jobs = [sched.store.create(chat([user(f"j{i}")], priority=0)) for i in range(5)]
+        for j in jobs:
+            await sched.submit(j)
 
-        # Job is archived (removed from the live store) once finished.
-        await wait_until(lambda: sched.store.get(job.id) is None)
+        await asyncio.sleep(0.8)
+        assert fake._max_active == 2
+        # All five eventually complete.
         history = sched.store.list()
-        finished = next((j for j in history if j.id == job.id), None)
-        assert finished is not None
-        assert finished.status == JobStatus.COMPLETED
-        assert finished.result == f"done:{job.id}"
+        assert len([j for j in history if j.status == JobStatus.COMPLETED]) == 5
     finally:
         await sched.stop()
 
 
 @pytest.mark.asyncio
-async def test_cancel_queued_job():
-    backend = GatedBackend()
-    sched = Scheduler(num_workers=1, backend=backend)
+async def test_job_completes_and_is_recorded(fake_model_factory):
+    fake = fake_model_factory()
+    sched = Scheduler(num_workers=1)
     await sched.start()
     try:
-        first = await sched.submit(payload("blocker"), priority=0)
-        second = await sched.submit(payload("victim"), priority=0)
+        job = sched.store.create(chat([user("x")]))
+        await sched.submit(job)
 
-        # first starts (occupies the single worker); second stays queued.
-        await wait_until(lambda: first.id in backend.gates)
-        assert second.id not in backend.gates  # still queued
+        await asyncio.sleep(0.1)
+        assert sched.store.get(job.id) is None  # archived
+        history = sched.store.list()
+        done = next((j for j in history if j.id == job.id), None)
+        assert done is not None
+        assert done.status == JobStatus.COMPLETED
+        assert done.result == "done:x"
+    finally:
+        await sched.stop()
 
-        cancelled = await sched.cancel(second.id)
+
+@pytest.mark.asyncio
+async def test_cancel_queued_job(fake_model_factory):
+    fake = fake_model_factory()
+    sched = Scheduler(num_workers=1)
+    await sched.start()
+    try:
+        blocker = sched.store.create(chat([user("blocker")]))
+        # Gate the blocker so it holds the single worker; the victim stays queued.
+        fake.gates["blocker"] = threading.Event()
+        victim = sched.store.create(chat([user("victim")]))
+        await sched.submit(blocker)
+        await asyncio.sleep(0.02)
+        await sched.submit(victim)
+
+        cancelled = await sched.cancel(victim.id)
         assert cancelled is not None
         assert cancelled.status == JobStatus.CANCELLED
 
-        backend.gates[first.id].set()
-        await wait_until(lambda: sched.queue_size == 0)
+        # Release the blocker so shutdown is clean.
+        fake.gates["blocker"].set()
+        await asyncio.sleep(0.02)
     finally:
         await sched.stop()
 
 
 @pytest.mark.asyncio
-async def test_backpressure_blocks_when_full():
-    backend = GatedBackend()
-    # maxsize 1 => only one job may occupy the queue.
-    sched = Scheduler(num_workers=0, max_queue_size=1, backend=backend)
+async def test_cannot_cancel_running_job(fake_model_factory):
+    fake = fake_model_factory()
+    sched = Scheduler(num_workers=1)
     await sched.start()
     try:
-        first = await sched.submit(payload("one"), priority=0)
+        running = sched.store.create(chat([user("running")]))
+        fake.gates["running"] = threading.Event()  # block it in-flight
+        await sched.submit(running)
+        await asyncio.sleep(0.02)
+
+        assert await sched.cancel(running.id) is None  # running, not cancellable
+
+        fake.gates["running"].set()
+        await asyncio.sleep(0.02)
+    finally:
+        await sched.stop()
+
+
+@pytest.mark.asyncio
+async def test_backpressure_blocks_until_capacity_frees(fake_model_factory):
+    fake = fake_model_factory()
+    sched = Scheduler(num_workers=0, max_queue_size=1)
+    await sched.start()
+    try:
+        first = sched.store.create(chat([user("one")]))
+        await sched.submit(first)
         assert sched.queue_size == 1
 
-        second_task = asyncio.create_task(sched.submit(payload("two"), priority=0))
-        await asyncio.sleep(0.1)
+        second = sched.store.create(chat([user("two")]))
+        second_task = asyncio.create_task(sched.submit(second))
+        await asyncio.sleep(0.05)
         assert second_task.done() is False  # blocked by backpressure
 
-        # Free capacity, the blocked submit proceeds.
+        # Free capacity; the blocked submit proceeds.
         await sched.cancel(first.id)
-        second = await asyncio.wait_for(second_task, timeout=1.0)
-        assert second is not None
+        await asyncio.wait_for(second_task, timeout=1.0)
     finally:
         await sched.stop()
 
 
 @pytest.mark.asyncio
-async def test_bounded_concurrency():
-    backend = GatedBackend()
-    sched = Scheduler(num_workers=2, backend=backend)
+async def test_streaming_publishes_deltas(fake_model_factory):
+    fake = fake_model_factory()
+    sched = Scheduler(num_workers=1)
     await sched.start()
     try:
-        jobs = [await sched.submit(payload(f"j{i}"), priority=0) for i in range(5)]
+        job = sched.store.create(chat([user("ping")], stream=True))
+        await sched.submit(job)
 
-        # Exactly num_workers jobs start; the rest remain queued.
-        await wait_until(lambda: len(backend.start_order) == 2)
-        assert backend.start_order == [jobs[0].id, jobs[1].id]
-        assert sched.queue_size == 3
+        # Wait for the stream to be created by the worker.
+        queue = None
+        for _ in range(100):
+            queue = sched.bus.stream_or_none(job.id)
+            if queue is not None:
+                break
+            await asyncio.sleep(0.01)
 
-        await release_all(backend)
-        await wait_until(lambda: sched.queue_size == 0)
+        assert queue is not None
+        deltas = []
+        while True:
+            item = await queue.get()
+            from scheduler.events import END
+
+            if item is END:
+                break
+            deltas.append(item)
+        assert deltas == ["hi ping", " bye ping"]
     finally:
         await sched.stop()
