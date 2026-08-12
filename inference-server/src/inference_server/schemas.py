@@ -26,7 +26,7 @@ class Message(BaseModel):
 
 
 class ChatCompletionRequest(BaseModel):
-    model: str = "mock-model"
+    model: str = "qwen2.5-0.5b-instruct"
     messages: list[Message]
     temperature: float = 1.0
     max_tokens: int | None = Field(default=None, ge=1)
@@ -56,7 +56,7 @@ class ChatCompletionResponse(BaseModel):
 
 
 class EmbeddingRequest(BaseModel):
-    model: str = "mock-embedding"
+    model: str = "nomic-embed-text-v1.5"
     input: str | list[str]
 
 
@@ -71,3 +71,15 @@ class EmbeddingResponse(BaseModel):
     data: list[EmbeddingData]
     model: str
     usage: Usage
+
+
+class Model(BaseModel):
+    id: str
+    object: str = "model"
+    created: int = 0
+    owned_by: str = "inference-server"
+
+
+class ModelList(BaseModel):
+    object: str = "list"
+    data: list[Model]

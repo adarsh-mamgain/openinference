@@ -1,8 +1,16 @@
-"""Router implementing `POST /v1/embeddings`."""
+"""Router implementing `POST /v1/embeddings` using a real embedding model.
+
+Embeddings come from a dedicated local model (nomic-embed-text, 768-dim) loaded
+with ``embedding=True`` in llama-cpp-python, so the vectors are genuine
+semantic embeddings rather than a heuristic.
+"""
+
+import asyncio
 
 from fastapi import APIRouter
 
-from inference_server.mock_model import count_tokens
+from inference_server.exceptions import ModelUnavailableError
+from inference_server.llm import embedding_model
 from inference_server.schemas import (
     EmbeddingData,
     EmbeddingRequest,
@@ -12,37 +20,23 @@ from inference_server.schemas import (
 
 router = APIRouter()
 
-EMBEDDING_DIM = 128
-
-
-def embed(text: str, dim: int = EMBEDDING_DIM) -> list[float]:
-    """Deterministic bag-of-words-style embedding.
-
-    Each character maps to a stable pseudo-random value via its hash, and the
-    values are summed and normalized. The same input always yields the same
-    vector, which is enough to explore the API surface and later to build a
-    vector database on top.
-    """
-    vector = [0.0] * dim
-    for ch in text:
-        index = hash(ch) % dim
-        vector[index] += 1.0
-    norm = sum(v * v for v in vector) ** 0.5
-    if norm == 0:
-        return vector
-    return [v / norm for v in vector]
-
 
 @router.post("/embeddings", response_model=EmbeddingResponse)
-def create_embedding(request: EmbeddingRequest) -> EmbeddingResponse:
+async def create_embedding(request: EmbeddingRequest) -> EmbeddingResponse:
     """Create embeddings for a single string or a list of strings."""
+    if not embedding_model.available:
+        raise ModelUnavailableError(
+            "Embedding model not downloaded. Run `./scripts/download-model.sh` and restart."
+        )
+
     inputs = request.input if isinstance(request.input, list) else [request.input]
+    vectors = await asyncio.to_thread(embedding_model.embed, inputs)
 
     data = [
-        EmbeddingData(embedding=embed(text), index=i)
-        for i, text in enumerate(inputs)
+        EmbeddingData(embedding=vector, index=i)
+        for i, vector in enumerate(vectors)
     ]
-    prompt_tokens = sum(count_tokens(text) for text in inputs)
+    prompt_tokens = sum(embedding_model.count_tokens(t) for t in inputs)
 
     return EmbeddingResponse(
         data=data,
