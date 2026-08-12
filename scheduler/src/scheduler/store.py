@@ -9,7 +9,7 @@ import time
 import uuid
 from collections import OrderedDict
 
-from scheduler.schemas import Job, JobPayload, JobStatus
+from scheduler.schemas import Job, JobStatus, JobSubmitRequest
 
 
 class JobStore:
@@ -18,11 +18,16 @@ class JobStore:
         self._history: OrderedDict[str, Job] = OrderedDict()
         self._max_history = max_history
 
-    def create(self, payload: JobPayload, priority: int) -> Job:
+    def create(self, request: JobSubmitRequest) -> Job:
         job = Job(
             id=f"job_{uuid.uuid4().hex[:16]}",
-            priority=priority,
-            payload=payload,
+            priority=request.priority,
+            messages=request.messages,
+            model=request.model,
+            max_tokens=request.max_tokens,
+            temperature=request.temperature,
+            tools=request.tools,
+            stream=request.stream,
             created_at=time.time(),
         )
         self._jobs[job.id] = job

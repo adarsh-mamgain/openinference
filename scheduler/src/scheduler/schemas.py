@@ -1,9 +1,16 @@
-"""Job and API data models for the scheduler."""
+"""Job and API data models for the scheduler.
+
+A job is a *chat completion request* that the scheduler queues by priority and
+executes against the inference-server's real local model. ``Message`` is reused
+from the inference-server package so request/response shapes stay identical to
+the OpenAI wire format.
+"""
 
 from enum import Enum
-from typing import Any
 
 from pydantic import BaseModel, Field
+
+from inference_server.schemas import Message
 
 
 class JobStatus(str, Enum):
@@ -14,24 +21,25 @@ class JobStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
-class JobPayload(BaseModel):
-    """Arbitrary work to run. Backends interpret this; the simulated backend
-    uses `seconds` as an artificial processing delay."""
-
-    task: str = "noop"
-    seconds: float | None = Field(default=None, gt=0)
-    data: dict[str, Any] = Field(default_factory=dict)
-
-
 class JobSubmitRequest(BaseModel):
-    payload: JobPayload
+    messages: list[Message]
     priority: int = Field(default=0, description="Lower value = higher priority")
+    model: str = "qwen2.5-0.5b-instruct"
+    max_tokens: int | None = Field(default=None, ge=1)
+    temperature: float = Field(default=0.7, ge=0, le=2)
+    tools: list[dict] | None = None
+    stream: bool = Field(default=False, description="Emit token deltas to /v1/jobs/{id}/stream")
 
 
 class Job(BaseModel):
     id: str
     priority: int
-    payload: JobPayload
+    messages: list[Message]
+    model: str
+    max_tokens: int | None
+    temperature: float
+    tools: list[dict] | None
+    stream: bool
     status: JobStatus = JobStatus.QUEUED
     result: str | None = None
     created_at: float
