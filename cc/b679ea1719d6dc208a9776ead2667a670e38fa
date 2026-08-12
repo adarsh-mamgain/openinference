@@ -1,0 +1,21 @@
+scheduler/src/scheduler/main.py
+  s_633a4eac2db235::t_7bd1e77cef4693 1-22,24,26-32,34-38,40-44,46-49,51-60,62-65,68-71
+  s_633a4eac2db235::t_519de6cdd3846f 66-67,72
+  s_633a4eac2db235::t_e1c62eefe7daf5 23,25,33,39,45,50,61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "ccb679ea1719d6dc208a9776ead2667a670e38fa",
+  "prompts": {},
+  "sessions": {
+    "s_633a4eac2db235": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_00b48a0d1ffeA9gZlN1PE6kMBh",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
