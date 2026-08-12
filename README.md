@@ -7,8 +7,8 @@ deliberately simple so the fundamentals are clear.
 
 | # | Project | Status | What you learn |
 |---|---------|--------|----------------|
-| 1 | [inference-server](./inference-server/) | In progress | HTTP, streaming, async, OpenAI API design |
-| 2 | scheduler | — | Queues, priorities, async workers |
+| 1 | [inference-server](./inference-server/) | Complete | HTTP, streaming, async, OpenAI API design |
+| 2 | [scheduler](./scheduler/) | Complete | Queues, priorities, async workers |
 | 3 | kv-cache | — | Caching, eviction, memory |
 | 4 | gpu-autoscaler | — | Scaling, metrics, backpressure |
 | 5 | benchmark-suite | — | Latency, throughput, load testing |
@@ -31,7 +31,7 @@ uv run uvicorn app.main:app --reload
 
 ## Tooling
 
-- Python 3.12+
+- Python 3.11+
 - [uv](https://github.com/astral-sh/uv) for dependency management
 - FastAPI + Uvicorn for the HTTP layer
 

@@ -51,9 +51,49 @@ Streaming Response
 - [x] 14. Real embeddings via a dedicated local model (nomic-embed-text)
 - [x] 15. `GET /v1/models` listing the served models
 
+## Project 2 — Priority-Queue Scheduler ⭐⭐⭐⭐
+
+The "Scheduler" layer between clients and the model. Requests enter a priority
+queue and a bounded pool of async workers drain it in priority-then-FIFO order,
+with bounded concurrency and backpressure. No model dependency yet — the
+executor is behind a pluggable `Backend` so a real model can be swapped in later.
+
+**Architecture**
+
+```
+Client
+  ↓
+FastAPI (submit / status / cancel)
+  ↓
+PriorityQueue (asyncio min-heap)
+  ↓
+Worker Pool (async, bounded)
+  ↓
+Backend (pluggable) → Result
+```
+
+**What we learn**
+
+- Priority queues / heaps (`heapq`, lazy-tombstone cancel)
+- Scheduling policies (priority-then-FIFO)
+- Async worker pools & bounded concurrency
+- Backpressure (bounded queue, blocking put)
+- Async API design (202 Accepted, resource lifecycle)
+
+**Steps**
+
+- [x] 1. Scaffold `scheduler/` uv project (pyproject, README, .gitignore)
+- [x] 2. Job model + status schemas
+- [x] 3. In-memory priority queue (FIFO tie-break, cancellation)
+- [x] 4. Async worker pool with bounded concurrency
+- [x] 5. Backpressure (max queue size, blocking put)
+- [x] 6. Pluggable `Backend` + simulated executor
+- [x] 7. FastAPI endpoints (submit / list / status / cancel, health)
+- [x] 8. Tests (priority, FIFO, concurrency, backpressure, cancel, API)
+- [x] 9. Docs (README, root README, roadmap)
+
 ## Upcoming Projects
 
-- [ ] scheduler
 - [ ] kv-cache
 - [ ] gpu-autoscaler
 - [ ] benchmark-suite
