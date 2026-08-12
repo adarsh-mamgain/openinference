@@ -1,0 +1,27 @@
+todo.md
+  s_633a4eac2db235::t_ab8d023d8c74fe 58-60,67-68,73-75,84-85,100-103
+inference-server/.env.example
+  s_633a4eac2db235::t_f5ab6e52ba1e1a 19-22
+README.md
+  s_633a4eac2db235::t_b194258b823332 25-27,32-34
+scheduler/README.md
+  s_633a4eac2db235::t_2024d28620240a 3-8,11-16,19,21-22,24-25,27-30,32-35,37,40,42-49,51,53-56,58,60-61,63-64,71-74,76-77,86-88
+scheduler/.env.example
+  s_633a4eac2db235::t_1a8130e41a9f6a 1-2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "298c0c5b96ba73dbe242bac68e32a3a0cebfdf51",
+  "prompts": {},
+  "sessions": {
+    "s_633a4eac2db235": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_00b48a0d1ffeA9gZlN1PE6kMBh",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
