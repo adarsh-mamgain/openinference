@@ -44,6 +44,12 @@ Streaming Response
 - [x] 8. Rate limiting
 - [x] 9. Tool calling / function calling
 - [x] 10. Serve real local model (Qwen2.5-0.5B GGUF via llama-cpp-python)
+- [x] 11. Landing page at `/` with a single CTA to `/docs`
+- [x] 12. Remove mock backend — real tokenizer token counting
+- [x] 13. Model-driven tool calling with the real local model (incl. Qwen
+       chat-template text format parsing)
+- [x] 14. Real embeddings via a dedicated local model (nomic-embed-text)
+- [x] 15. `GET /v1/models` listing the served models
 
 ## Upcoming Projects
 
