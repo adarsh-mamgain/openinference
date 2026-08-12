@@ -21,13 +21,19 @@ deliberately simple so the fundamentals are clear.
 
 ## Getting started
 
-Each project folder is self-contained with its own README and `uv` setup.
+The repo is a [uv workspace](https://docs.astral.sh/uv/concepts/projects/workspaces/)
+whose members are `inference-server` and `scheduler`. The scheduler depends on
+the inference-server and runs jobs against its real local model.
 
 ```bash
-cd inference-server
-uv sync
-uv run uvicorn app.main:app --reload
+uv sync --all-packages   # from the repo root; installs all members
+
+# Run each app in its own terminal
+uv run --package inference-server uvicorn inference_server.main:app --port 8000
+uv run --package scheduler uvicorn scheduler.main:app --port 8001
 ```
+
+Each project folder also has its own README and `uv` setup for standalone use.
 
 ## Tooling
 

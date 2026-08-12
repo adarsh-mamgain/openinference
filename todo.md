@@ -55,21 +55,21 @@ Streaming Response
 
 The "Scheduler" layer between clients and the model. Requests enter a priority
 queue and a bounded pool of async workers drain it in priority-then-FIFO order,
-with bounded concurrency and backpressure. No model dependency yet — the
-executor is behind a pluggable `Backend` so a real model can be swapped in later.
+with bounded concurrency and backpressure. It now runs real inference against
+the inference-server's local model via a uv workspace.
 
 **Architecture**
 
 ```
 Client
   ↓
-FastAPI (submit / status / cancel)
+FastAPI (submit / status / cancel / stream)
   ↓
 PriorityQueue (asyncio min-heap)
   ↓
 Worker Pool (async, bounded)
   ↓
-Backend (pluggable) → Result
+inference_server.llm.model → Result / SSE stream
 ```
 
 **What we learn**
@@ -78,7 +78,8 @@ Backend (pluggable) → Result
 - Scheduling policies (priority-then-FIFO)
 - Async worker pools & bounded concurrency
 - Backpressure (bounded queue, blocking put)
-- Async API design (202 Accepted, resource lifecycle)
+- Streaming / pub-sub (event bus → SSE)
+- Monorepo integration (uv workspace, cross-package import of the model)
 
 **Steps**
 
@@ -91,6 +92,9 @@ Backend (pluggable) → Result
 - [x] 7. FastAPI endpoints (submit / list / status / cancel, health)
 - [x] 8. Tests (priority, FIFO, concurrency, backpressure, cancel, API)
 - [x] 9. Docs (README, root README, roadmap)
+- [x] 10. Integrate with inference-server (uv workspace; drop Backend/mock;
+       worker calls `inference_server.llm.model`)
+- [x] 11. Streaming jobs (event bus + `GET /v1/jobs/{id}/stream` SSE)
 
 ## Upcoming Projects
 

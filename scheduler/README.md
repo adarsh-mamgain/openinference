@@ -1,45 +1,53 @@
 # scheduler
 
-A priority-queue request scheduler for inference workloads, built from scratch
-with FastAPI + asyncio. It is the "Scheduler" layer from the inference-server
-architecture diagram:
+A priority-queue request scheduler that fronts the **inference-server's real
+local model**. Part of the `openinference` monorepo (uv workspace). Instead of
+every request hitting the model directly, clients submit chat-completion
+**jobs** into an in-memory priority queue; a bounded pool of async workers
+drains the queue in priority-then-FIFO order, runs the model, and streams
+tokens back.
 
 ```
-Client  →  FastAPI  →  PriorityQueue  →  workers (async)  →  Backend  →  Result
+Client → FastAPI (POST /v1/jobs) → PriorityQueue → workers (async)
+        → inference_server.llm.model (Qwen2.5) → result / SSE stream
 ```
-
-Instead of every request hitting the model directly, requests are submitted as
-**jobs** into an in-memory priority queue. A bounded pool of async workers
-drains the queue, honouring priority (and FIFO among equal priorities), with
-bounded concurrency and backpressure.
 
 ## What it implements
 
 | Endpoint | Description |
 |----------|-------------|
 | `GET /health` | Health + queue/worker stats |
-| `POST /v1/jobs` | Submit a job into the priority queue (202 Accepted) |
-| `GET /v1/jobs` | List jobs (active first, then recent history) |
+| `POST /v1/jobs` | Submit a chat-completion job into the priority queue (202) |
+| `GET /v1/jobs` | List jobs (active first, then history) |
 | `GET /v1/jobs/{id}` | Fetch one job's status + result |
+| `GET /v1/jobs/{id}/stream` | SSE stream of token deltas for a streaming job |
 | `DELETE /v1/jobs/{id}` | Cancel a queued job |
 
 Features:
 
 - **Priority then FIFO** scheduling — lower `priority` value runs first; equal
-  priorities run in arrival order (stable heap with a sequence tiebreaker)
-- **Bounded async worker pool** — `NUM_WORKERS` jobs execute concurrently
-- **Backpressure** — a max queue size (`MAX_QUEUE_SIZE`); submits block until
-  capacity frees up
+  priorities run in arrival order (min-heap with a sequence tiebreaker)
+- **Bounded async worker pool** — `NUM_WORKERS` jobs generate concurrently
+- **Backpressure** — a bounded queue; submits block until capacity frees up
 - **Cancellation** — queued jobs can be cancelled (lazy-tombstone heap removal)
-- **Pluggable backend** — the executor is behind a small `Backend` interface; the
-  default `SimulatedBackend` applies an artificial delay so the scheduling
-  mechanics can be exercised without a model. Swap in a real model later.
+- **Real inference** — jobs run against `inference_server.llm.model`
+- **Streaming** — token deltas are fanned out over an in-process event bus to
+  the SSE endpoint
 
-## Setup
+## Setup (uv workspace)
+
+The monorepo root is a uv workspace containing `inference-server` and
+`scheduler`, so the scheduler depends on the real model directly.
 
 ```bash
-uv sync
-cp .env.example .env   # optional; defaults are fine for local dev
+uv sync --all-packages   # from the repo root; installs both packages
+```
+
+Run the scheduler (point the model at the GGUF weights):
+
+```bash
+cd scheduler
+cp .env.example .env
 uv run uvicorn scheduler.main:app --reload
 ```
 
@@ -48,52 +56,50 @@ Interactive docs: http://localhost:8000/docs
 ## Try it
 
 ```bash
-# Submit a job (lower priority number = higher priority)
+# Submit a chat job (lower priority number = higher priority)
 curl -X POST http://localhost:8000/v1/jobs \
   -H "Content-Type: application/json" \
-  -d '{"payload":{"task":"summarize","seconds":1.0},"priority":0}'
+  -d '{"messages":[{"role":"user","content":"Explain an API in one sentence."}],"priority":0}'
 
-# Check its status / result
+# Submit a streaming job, then watch token deltas
+curl -X POST http://localhost:8000/v1/jobs \
+  -H "Content-Type: application/json" \
+  -d '{"messages":[{"role":"user","content":"Count 1 2 3."}],"stream":true}'
+curl -N http://localhost:8000/v1/jobs/<job_id>/stream
+
+# Status / result (archived jobs return 404 and appear in /v1/jobs history)
 curl http://localhost:8000/v1/jobs/<job_id>
-
-# Submit a lot of jobs and watch higher priorities jump the queue
-curl -X POST http://localhost:8000/v1/jobs \
-  -H "Content-Type: application/json" \
-  -d '{"payload":{"task":"low","seconds":10.0},"priority":10}'
 
 # Cancel a queued job
 curl -X DELETE http://localhost:8000/v1/jobs/<job_id>
 
-# Health / stats
+# Queue stats
 curl http://localhost:8000/health
 ```
 
 ## Scheduling policy
 
-Jobs are stored in a binary min-heap. Each heap entry compares by
-`(priority, seq)`, so:
+Jobs live in a binary min-heap keyed by `(priority, seq)`, so:
 
-1. the job with the **lowest `priority`** value is popped first;
+1. the job with the **lowest `priority`** runs first;
 2. among equal priorities, the **earlier-submitted** job (lower `seq`) runs
    first — stable FIFO.
 
 Every worker pops from the same heap, so priority is respected globally rather
-than per-worker. Because the queue is bounded and workers are bounded, load
-above capacity backs up in the queue instead of overwhelming the backend.
+than per-worker. Bounded workers + a bounded queue mean load above capacity
+backs up instead of overwhelming the model.
 
 ## Project layout
 
 ```
 src/scheduler/
-├── main.py        # FastAPI app + endpoints + lifespan
+├── main.py        # FastAPI app + endpoints + streaming SSE
 ├── config.py      # settings from env
-├── schemas.py     # Job / JobStatus / API models
+├── schemas.py     # job = chat request (reuses inference_server Message)
 ├── store.py       # job registry + bounded history
 ├── queue.py       # asyncio min-heap priority queue (FIFO tie-break + cancel)
-├── backend.py     # pluggable Backend interface + SimulatedBackend
-└── scheduler.py   # worker pool + dispatch (the core)
-tests/
-└── test_scheduler.py
+├── events.py      # stream event bus (token deltas → SSE subscribers)
+└── scheduler.py   # worker pool + dispatch, calls inference_server.llm.model
 ```
 
 ## Concepts learned
@@ -102,4 +108,5 @@ tests/
 - **Scheduling policies** — priority-then-FIFO, global priority via shared heap
 - **Async worker pools** — `asyncio.create_task`, bounded concurrency
 - **Backpressure** — bounded queues, blocking `put` under load
-- **HTTP API design** — `202 Accepted`, resource lifecycle (create/read/cancel)
+- **Streaming / pub-sub** — in-process event bus, SSE fan-out to subscribers
+- **Monorepo integration** — uv workspace, cross-package import of the model
