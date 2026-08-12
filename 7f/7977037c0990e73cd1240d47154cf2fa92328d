@@ -1,0 +1,25 @@
+pyproject.toml
+  s_633a4eac2db235::t_e12a768ccc95c4 1-2
+  s_633a4eac2db235::t_7269711337e018 3-7
+scheduler/pyproject.toml
+  s_633a4eac2db235::t_6952efc5030cf4 12
+  s_633a4eac2db235::t_2361e4222f027a 24-26
+uv.lock
+  s_633a4eac2db235::t_0cdc5b74c796fa 6-13,68-76,193-221,231-497,752,755,770
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "7f7977037c0990e73cd1240d47154cf2fa92328d",
+  "prompts": {},
+  "sessions": {
+    "s_633a4eac2db235": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_00b48a0d1ffeA9gZlN1PE6kMBh",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
