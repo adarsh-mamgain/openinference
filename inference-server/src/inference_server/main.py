@@ -1,5 +1,7 @@
 """FastAPI application entrypoint for the inference server."""
 
+from contextlib import asynccontextmanager
+
 from fastapi import Depends, FastAPI
 from fastapi.responses import HTMLResponse
 
@@ -8,8 +10,19 @@ from inference_server.config import settings
 from inference_server.landing import landing_page
 from inference_server.rate_limit import RateLimiter, make_rate_limit_dependency
 from inference_server.routers import chat, embeddings, models
+from scheduler.scheduler import scheduler
 
-app = FastAPI(title=settings.app_name, version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Chat routes queue requests through the scheduler's worker pool, so it
+    # must be running for the lifetime of the server.
+    await scheduler.start()
+    yield
+    await scheduler.stop()
+
+
+app = FastAPI(title=settings.app_name, version="0.1.0", lifespan=lifespan)
 
 _limiter = RateLimiter(
     max_requests=settings.rate_limit_max_requests,

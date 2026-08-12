@@ -12,6 +12,7 @@ dependencies = [
     "llama-cpp-python>=0.3.34",
     "pydantic>=2.13.4",
     "pydantic-settings>=2.14.2",
+    "scheduler>=0.1.0",
     "uvicorn[standard]>=0.52.1",
 ]
 
@@ -24,6 +25,9 @@ dev = [
 # Prebuilt CPU wheels for llama-cpp-python; avoids compiling from source.
 # Comment this out if you prefer to build locally.
 extra-index-url = ["https://abetlen.github.io/llama-cpp-python/whl/cpu"]
+
+[tool.uv.sources]
+scheduler = { workspace = true }
 
 [build-system]
 requires = ["uv_build>=0.11.19,<0.12.0"]

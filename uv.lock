@@ -199,6 +199,7 @@ dependencies = [
     { name = "llama-cpp-python" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
+    { name = "scheduler" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -213,6 +214,7 @@ requires-dist = [
     { name = "llama-cpp-python", specifier = ">=0.3.34" },
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pydantic-settings", specifier = ">=2.14.2" },
+    { name = "scheduler", editable = "scheduler" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.52.1" },
 ]
 
@@ -751,10 +753,9 @@ name = "scheduler"
 version = "0.1.0"
 source = { editable = "scheduler" }
 dependencies = [
-    { name = "fastapi" },
     { name = "inference-server" },
+    { name = "pydantic" },
     { name = "pydantic-settings" },
-    { name = "uvicorn", extra = ["standard"] },
 ]
 
 [package.dev-dependencies]
@@ -766,10 +767,9 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "fastapi", specifier = ">=0.141.1" },
     { name = "inference-server", editable = "inference-server" },
+    { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pydantic-settings", specifier = ">=2.14.2" },
-    { name = "uvicorn", extras = ["standard"], specifier = ">=0.52.1" },
 ]
 
 [package.metadata.requires-dev]

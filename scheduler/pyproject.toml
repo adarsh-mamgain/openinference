@@ -1,17 +1,16 @@
 [project]
 name = "scheduler"
 version = "0.1.0"
-description = "A priority-queue request scheduler for inference workloads"
+description = "A priority-queue scheduler library used inside the inference-server"
 readme = "README.md"
 authors = [
     { name = "Adarsh Mamgain", email = "52105807+adarsh-mamgain@users.noreply.github.com" }
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "fastapi>=0.141.1",
     "inference-server>=0.1.0",
+    "pydantic>=2.13.4",
     "pydantic-settings>=2.14.2",
-    "uvicorn[standard]>=0.52.1",
 ]
 
 [dependency-groups]

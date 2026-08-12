@@ -1,37 +1,46 @@
-"""The scheduler: a bounded pool of async workers draining a priority queue.
+"""A priority-queue scheduler library used inside the inference-server.
 
-Work flows::
+Clients (the inference-server chat router) submit chat-completion requests as
+jobs. A bounded pool of async workers drains the queue and runs the real model
+from ``inference_server.llm``, honouring priority-then-FIFO ordering, bounded
+concurrency and backpressure.
 
-    submit() -> store.create() -> queue.put(QueueItem)
-        worker loop: queue.get() -> mark running -> generate on the model
-                    -> publish deltas (if streaming) / store result -> archive
+Library API (no HTTP surface — this is consumed by the inference-server):
 
-Priority is honoured because every worker pops from the same min-heap, so the
-highest-priority outstanding job is always picked next regardless of which
-worker is free. Concurrency is bounded by ``num_workers``.
+    scheduler = Scheduler(num_workers=2)
+    await scheduler.start()
+    job = await scheduler.submit_chat(messages=[...], max_tokens=32)
+    await job.done.wait()
+    text = job.result            # non-streaming
 
-Inference runs against the inference-server's real local model
-(``inference_server.llm.model``). Generation is CPU-bound/blocking, so it runs
-in ``asyncio.to_thread``; streaming jobs publish token deltas to a :class:`StreamBus`
-that the SSE endpoint subscribes to.
+    job = await scheduler.submit_chat(messages=[...], stream=True)
+    async for delta in scheduler.subscribe_stream(job.id):
+        ...                       # streaming
 """
 
 import asyncio
 import logging
-from collections.abc import Iterator
+from collections.abc import AsyncIterator, Iterator
 
 from inference_server.llm import model
 from inference_server.schemas import Message as ChatMessage
+from inference_server.tools import (
+    TOOL_SCHEMAS,
+    parse_text_tool_call,
+    run_tool,
+    tool_result_message,
+)
 
 from scheduler.config import settings
-from scheduler.events import StreamBus
+from scheduler.events import END, StreamBus
 from scheduler.queue import PriorityQueue, QueueItem
-from scheduler.schemas import Job, JobStatus
+from scheduler.schemas import Job, JobStatus, JobSubmitRequest
 from scheduler.store import JobStore
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_MAX_TOKENS = 64
+MAX_TOOL_TURNS = 4
 
 
 class Scheduler:
@@ -65,12 +74,37 @@ class Scheduler:
         await asyncio.gather(*self._workers, return_exceptions=True)
         self._workers = []
 
-    async def submit(self, job: Job) -> Job:
-        """Enqueue a job. Blocks under backpressure until space frees."""
+    async def submit_chat(
+        self,
+        messages: list[dict],
+        *,
+        priority: int = 0,
+        model_name: str = "qwen2.5-0.5b-instruct",
+        max_tokens: int | None = None,
+        temperature: float = 0.7,
+        tools: list[dict] | None = None,
+        stream: bool = False,
+    ) -> Job:
+        """Create and enqueue a chat-completion job; returns immediately."""
+        request = JobSubmitRequest(
+            messages=[
+                ChatMessage(**m) if isinstance(m, dict) else m for m in messages
+            ],
+            priority=priority,
+            model=model_name,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            tools=tools,
+            stream=stream,
+        )
+        job = self.store.create(request)
         seq = self._seq
         self._seq += 1
         await self.queue.put(QueueItem(priority=job.priority, seq=seq, job_id=job.id))
         return job
+
+    def job(self, job_id: str) -> Job | None:
+        return self.store.get(job_id)
 
     async def cancel(self, job_id: str) -> Job | None:
         """Cancel a job if it is still queued. In-flight jobs cannot be aborted.
@@ -84,6 +118,35 @@ class Scheduler:
                 self.store.set_status(job_id, JobStatus.CANCELLED)
                 self.store.archive(job)
                 return job
+        return None
+
+    async def subscribe_stream(self, job_id: str) -> AsyncIterator[str]:
+        """Yield token deltas for a streaming job until it finishes."""
+        queue = await self._wait_for_stream(job_id)
+        if queue is None:
+            return
+        ended = False
+        while True:
+            try:
+                item = await queue.get()
+            except asyncio.CancelledError:
+                raise
+            if item is END:
+                ended = True
+                break
+            yield item
+        del ended  # stream ends when its sentinel arrives
+
+    async def _wait_for_stream(self, job_id: str) -> "asyncio.Queue | None":
+        """Return the job's stream queue once the worker creates it."""
+        for _ in range(200):  # ~5s budget to reach RUNNING + create the stream
+            queue = self.bus.stream_or_none(job_id)
+            if queue is not None:
+                return queue
+            job = self.store.get(job_id)
+            if job is None or _is_terminal(job.status):
+                return None
+            await asyncio.sleep(0.025)
         return None
 
     async def _worker(self, index: int) -> None:
@@ -124,11 +187,34 @@ class Scheduler:
             await self._stream(job, messages, max_tokens)
             return
 
-        # Non-distributed generation.
-        content, _tool_calls, _finish = await asyncio.to_thread(
-            model.generate, messages, max_tokens, job.tools
+        content = await asyncio.to_thread(
+            self._generate_with_tools, messages, max_tokens, job.tools
         )
         self.store.set_result(job.id, content or "")
+
+    def _generate_with_tools(
+        self, messages: list[ChatMessage], max_tokens: int, tools: list[dict] | None
+    ) -> str:
+        """Model-driven tool-calling loop. Returns the final assistant content."""
+        tools = tools or TOOL_SCHEMAS
+        for _ in range(MAX_TOOL_TURNS):
+            content, tool_calls, _finish = model.generate(messages, max_tokens, tools)
+            if tool_calls:
+                for call in tool_calls:
+                    result = run_tool(call)
+                    messages.append(
+                        ChatMessage(role="assistant", content=None, tool_calls=[call])
+                    )
+                    messages.append(tool_result_message(call, result))
+                continue
+            text_call = parse_text_tool_call(content or "")
+            if text_call is not None:
+                result = run_tool(text_call)
+                messages.append(ChatMessage(role="assistant", content=content, tool_calls=[text_call]))
+                messages.append(tool_result_message(text_call, result))
+                continue
+            return content or ""
+        raise RuntimeError("Tool-calling loop exceeded its turn budget")
 
     async def _stream(self, job: Job, messages: list[ChatMessage], max_tokens: int) -> None:
         """Generate token deltas and fan them out to the job's subscribers."""
@@ -183,5 +269,5 @@ def _is_terminal(status: JobStatus) -> bool:
     )
 
 
-# Module-level singleton shared across requests.
+# Default singleton that the inference-server starts on its own lifespan.
 scheduler = Scheduler()

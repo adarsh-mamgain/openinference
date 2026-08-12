@@ -1,14 +1,15 @@
-"""Job and API data models for the scheduler.
+"""Job data models for the scheduler library.
 
 A job is a *chat completion request* that the scheduler queues by priority and
 executes against the inference-server's real local model. ``Message`` is reused
-from the inference-server package so request/response shapes stay identical to
-the OpenAI wire format.
+from the inference-server package so request shapes stay identical to the
+OpenAI wire format. This is a library, so there are no HTTP response models.
 """
 
+import asyncio
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from inference_server.schemas import Message
 
@@ -28,10 +29,12 @@ class JobSubmitRequest(BaseModel):
     max_tokens: int | None = Field(default=None, ge=1)
     temperature: float = Field(default=0.7, ge=0, le=2)
     tools: list[dict] | None = None
-    stream: bool = Field(default=False, description="Emit token deltas to /v1/jobs/{id}/stream")
+    stream: bool = Field(default=False, description="Emit token deltas to the subscriber")
 
 
 class Job(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     id: str
     priority: int
     messages: list[Message]
@@ -45,19 +48,4 @@ class Job(BaseModel):
     created_at: float
     started_at: float | None = None
     finished_at: float | None = None
-
-
-class JobStatusResponse(BaseModel):
-    job: Job
-
-
-class JobListResponse(BaseModel):
-    object: str = "list"
-    data: list[Job]
-
-
-class HealthResponse(BaseModel):
-    status: str = "ok"
-    queue_size: int
-    in_flight: int
-    workers: int
+    done: "asyncio.Event" = Field(default_factory=asyncio.Event, exclude=True)

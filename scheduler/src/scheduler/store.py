@@ -3,6 +3,9 @@
 The store is an in-process dict keyed by job id. Because all processing happens
 on a single asyncio event loop (workers await rather than hold locks), a plain
 dict is safe: no two coroutines mutate the same entry concurrently.
+
+Every job also carries an ``asyncio.Event`` (``done``) that a caller can await
+to learn when the job reaches a terminal state and its result is available.
 """
 
 import time
@@ -44,6 +47,7 @@ class JobStore:
             job.started_at = now
         elif status in (JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED):
             job.finished_at = now
+            job.done.set()
 
     def set_result(self, job_id: str, result: str) -> None:
         self._jobs[job_id].result = result
