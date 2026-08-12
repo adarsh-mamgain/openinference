@@ -1,0 +1,25 @@
+scheduler/tests/test_scheduler.py
+  s_633a4eac2db235::t_9555243eb7084f 2,15,77-79,93-94,108,113-114,125,127-129,142,144,148,164,181,184,201,203-205,207-208
+scheduler/tests/test_api.py
+  s_633a4eac2db235::t_4cbac5be0cbd22 53,57,68
+  s_633a4eac2db235::t_416136a4394267 74,91,105-111,115-116
+  s_633a4eac2db235::t_69fa86ca9a5f3d 17
+  s_633a4eac2db235::t_301cd926d188b2 28-31,51-52,54,67
+  s_633a4eac2db235::t_694426cf7ba61a 1-6,16,18,22,45,49-50,59,61-66,69-73,75-81,84-86,88-90,92-98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "6ab0e7ad0baec0bd44cbbcd1f1742e7aa6dd1d8a",
+  "prompts": {},
+  "sessions": {
+    "s_633a4eac2db235": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_00b48a0d1ffeA9gZlN1PE6kMBh",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
