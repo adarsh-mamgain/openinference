@@ -1,0 +1,23 @@
+inference-server/src/inference_server/main.py
+  s_633a4eac2db235::t_f24737286e71ae 8,30-35
+inference-server/src/inference_server/routers/models.py
+  s_633a4eac2db235::t_bd5318a506ccdd 6,15-19,21
+  s_633a4eac2db235::t_093b57cadec3b7 1-5,7-14,23-24
+  s_633a4eac2db235::t_1d7753e166adca 20,22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "837c8d1fd182a0b98293140183b522b475131e68",
+  "prompts": {},
+  "sessions": {
+    "s_633a4eac2db235": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_00b48a0d1ffeA9gZlN1PE6kMBh",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
