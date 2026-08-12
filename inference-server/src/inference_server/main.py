@@ -1,9 +1,11 @@
 """FastAPI application entrypoint for the inference server."""
 
 from fastapi import Depends, FastAPI
+from fastapi.responses import HTMLResponse
 
 from inference_server.auth import require_api_key
 from inference_server.config import settings
+from inference_server.landing import landing_page
 from inference_server.rate_limit import RateLimiter, make_rate_limit_dependency
 from inference_server.routers import chat, embeddings, models
 
@@ -41,7 +43,7 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.get("/")
-def root() -> dict[str, str]:
-    """Human-friendly landing response."""
-    return {"service": settings.app_name, "docs": "/docs"}
+@app.get("/", response_class=HTMLResponse)
+def root() -> HTMLResponse:
+    """Beautiful landing page explaining the product, one CTA to /docs."""
+    return landing_page()
