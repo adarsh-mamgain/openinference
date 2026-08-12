@@ -1,0 +1,7 @@
+[tool.uv.workspace]
+members = ["inference-server", "scheduler"]
+
+[tool.uv]
+# Prebuilt CPU wheels for llama-cpp-python; avoids compiling from source across
+# the whole workspace (inference-server and scheduler both use the real model).
+extra-index-url = ["https://abetlen.github.io/llama-cpp-python/whl/cpu"]
