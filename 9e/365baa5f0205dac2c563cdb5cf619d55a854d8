@@ -1,0 +1,23 @@
+README.md
+  s_633a4eac2db235::t_b194258b823332 25-27
+scheduler/README.md
+  s_633a4eac2db235::t_2024d28620240a 3-8,11-16,19,21-22,24-25,27-30,32-35,37,40,42-49,51,53-56,58,60-61,63-64,71-74,76-77,86-88
+scheduler/.env.example
+  s_633a4eac2db235::t_1a8130e41a9f6a 1-2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "9e365baa5f0205dac2c563cdb5cf619d55a854d8",
+  "prompts": {},
+  "sessions": {
+    "s_633a4eac2db235": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_00b48a0d1ffeA9gZlN1PE6kMBh",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
