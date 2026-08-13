@@ -10,7 +10,7 @@ from inference_server.config import settings
 from inference_server.landing import landing_page
 from inference_server.rate_limit import RateLimiter, make_rate_limit_dependency
 from inference_server.routers import chat, embeddings, models
-from inference_server.scheduler.scheduler import scheduler
+from scheduler.scheduler import scheduler
 
 
 @asynccontextmanager

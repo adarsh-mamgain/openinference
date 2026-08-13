@@ -31,11 +31,11 @@ from inference_server.tools import (
     tool_result_message,
 )
 
-from inference_server.scheduler.config import settings
-from inference_server.scheduler.events import END, StreamBus
-from inference_server.scheduler.queue import PriorityQueue, QueueItem
-from inference_server.scheduler.schemas import Job, JobStatus, JobSubmitRequest
-from inference_server.scheduler.store import JobStore
+from scheduler.config import settings
+from scheduler.events import END, StreamBus
+from scheduler.queue import PriorityQueue, QueueItem
+from scheduler.schemas import Job, JobStatus, JobSubmitRequest
+from scheduler.store import JobStore
 
 logger = logging.getLogger(__name__)
 

@@ -12,10 +12,10 @@ import threading
 import httpx2
 import pytest
 
-import inference_server.scheduler.scheduler as sched_module
+import scheduler.scheduler as sched_module
 from inference_server import main as app_module
 from inference_server.routers import chat as chat_module
-from inference_server.scheduler.scheduler import scheduler as global_scheduler
+from scheduler.scheduler import scheduler as global_scheduler
 
 
 class FakeModel:
