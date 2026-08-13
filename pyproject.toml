@@ -1,5 +1,5 @@
 [tool.uv.workspace]
-members = ["inference-server", "scheduler"]
+members = ["inference-server", "scheduler", "scratch-inference"]
 
 [tool.uv]
 # Prebuilt CPU wheels for llama-cpp-python; avoids compiling from source across

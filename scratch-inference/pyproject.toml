@@ -1,0 +1,26 @@
+[project]
+name = "scratch-inference"
+version = "0.1.0"
+description = "An inference stack built from scratch: BPE tokenizer, transformer forward pass, KV cache"
+readme = "README.md"
+authors = [
+    { name = "Adarsh Mamgain", email = "52105807+adarsh-mamgain@users.noreply.github.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=2.0",
+    "regex>=2024.5.15",
+    "safetensors>=0.4",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.19,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

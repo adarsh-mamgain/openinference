@@ -1,0 +1,29 @@
+# Nixpacks build configuration — used by Coolify's Nixpacks builder.
+#
+# Coolify builds from the repo ROOT (Base Directory = /), which is a uv
+# workspace (inference-server, scheduler, scratch-inference). This config:
+#   1. install — `uv sync --no-dev --frozen` at the root (installs every member
+#                into one venv using the prebuilt llama-cpp-python CPU wheel)
+#   2. build   — download the GGUF model weights into the image
+#   3. start   — uvicorn the inference-server ($PORT is set by Coolify)
+#
+# Models land at /app/models/... (the repo root at runtime), which matches the
+# inference-server's default MODEL_PATH (models/...).
+
+[phases.setup]
+nixPkgs = ['python311', 'gcc', 'curl']
+
+[phases.install]
+dependsOn = ['setup']
+cmds = [
+    'python -m venv --copies /opt/venv && . /opt/venv/bin/activate && pip install uv && uv sync --no-dev --frozen'
+]
+
+[phases.build]
+dependsOn = ['install']
+cmds = [
+    'bash inference-server/scripts/download-model.sh'
+]
+
+[start]
+cmd = 'uvicorn inference_server.main:app --host 0.0.0.0 --port ${PORT:-8000}'

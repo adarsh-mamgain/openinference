@@ -1,0 +1,13 @@
+# Virtual environments
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+dist/
+build/
+
+# Model weights / tokenizer data (large binaries, download via script)
+data/
