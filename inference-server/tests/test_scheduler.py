@@ -11,9 +11,9 @@ import time
 
 import pytest
 
-import scheduler.scheduler as sched_module
-from scheduler.events import END
-from scheduler.scheduler import Scheduler
+import inference_server.scheduler.scheduler as sched_module
+from inference_server.scheduler.events import END
+from inference_server.scheduler.scheduler import Scheduler
 
 
 class FakeModel:

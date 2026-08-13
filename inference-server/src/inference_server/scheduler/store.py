@@ -12,7 +12,7 @@ import time
 import uuid
 from collections import OrderedDict
 
-from scheduler.schemas import Job, JobStatus, JobSubmitRequest
+from inference_server.scheduler.schemas import Job, JobStatus, JobSubmitRequest
 
 
 class JobStore:

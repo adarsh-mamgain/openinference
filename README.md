@@ -8,8 +8,9 @@ deliberately simple so the fundamentals are clear.
 | # | Project | Status | What you learn |
 |---|---------|--------|----------------|
 | 1 | [inference-server](./inference-server/) | Complete | HTTP, streaming, async, OpenAI API design |
-| 2 | [scheduler](./scheduler/) | Complete | Queues, priorities, async workers |
-| 3 | kv-cache | — | Caching, eviction, memory |
+| 2 | scheduler | Complete | Queues, priorities, async workers (internal library in inference-server) |
+| 3 | [scratch-inference](./scratch-inference/) | In progress | BPE tokenizer, transformer forward pass, KV cache from scratch |
+| 4 | kv-cache | — | Caching, eviction, memory |
 | 4 | gpu-autoscaler | — | Scaling, metrics, backpressure |
 | 5 | benchmark-suite | — | Latency, throughput, load testing |
 | 6 | rag-system | — | Retrieval, embeddings, pipelines |
@@ -22,9 +23,9 @@ deliberately simple so the fundamentals are clear.
 ## Getting started
 
 The repo is a [uv workspace](https://docs.astral.sh/uv/concepts/projects/workspaces/)
-whose members are `inference-server` and `scheduler`. The `scheduler` is an
-**internal library**: the inference-server imports it as its request queue, so
-the inference-server is the only service you run.
+whose members are `inference-server` and `scratch-inference`. The **scheduler**
+is an internal library folded into the `inference_server` package (its request
+queue), so the inference-server is the only service you run.
 
 ```bash
 uv sync --all-packages   # from the repo root; installs all members

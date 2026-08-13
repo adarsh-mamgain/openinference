@@ -25,7 +25,7 @@ from inference_server.schemas import (
     Message,
     Usage,
 )
-from scheduler.scheduler import scheduler
+from inference_server.scheduler.scheduler import scheduler
 
 router = APIRouter()
 
