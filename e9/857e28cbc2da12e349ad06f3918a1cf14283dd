@@ -1,0 +1,41 @@
+pyproject.toml
+  s_633a4eac2db235::t_383890ef165f2c 2
+scratch-inference/.gitignore
+  s_633a4eac2db235::t_d74f6df8bd4239 1-13
+nixpacks.toml
+  s_633a4eac2db235::t_de9090d2fdc393 1-29
+scratch-inference/README.md
+  s_abdf6d58646787::t_63940a0bae1365 1-56
+scratch-inference/src/scratch_inference/kv_cache.py
+  s_abdf6d58646787::t_28b931bb374a3f 1-81
+scratch-inference/src/scratch_inference/loader.py
+  s_abdf6d58646787::t_32a2ee7b8768d4 1-142
+scratch-inference/src/scratch_inference/model.py
+  s_abdf6d58646787::t_b07eedf06e413a 1-273
+uv.lock
+  s_633a4eac2db235::t_8284a5d28abbc9 14,752-879,911-936
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "e9857e28cbc2da12e349ad06f3918a1cf14283dd",
+  "prompts": {},
+  "sessions": {
+    "s_633a4eac2db235": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_00b48a0d1ffeA9gZlN1PE6kMBh",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    },
+    "s_abdf6d58646787": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_00e1a1025ffeEqulLinj2T0xuj",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
