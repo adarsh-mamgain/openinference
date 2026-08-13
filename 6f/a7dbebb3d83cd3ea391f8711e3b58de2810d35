@@ -1,0 +1,51 @@
+inference-server/tests/test_api.py
+  s_633a4eac2db235::t_d548ed82a9bb4c 1-116
+inference-server/tests/test_scheduler.py
+  s_633a4eac2db235::t_d548ed82a9bb4c 1-210
+inference-server/src/inference_server/main.py
+  s_633a4eac2db235::t_76035d40966246 13
+README.md
+  s_633a4eac2db235::t_32b7608d85abd5 11-13
+  s_633a4eac2db235::t_cd09541bea6ab1 26-28
+inference-server/src/inference_server/routers/chat.py
+  s_633a4eac2db235::t_76035d40966246 28
+inference-server/src/inference_server/scheduler/__init__.py
+  s_633a4eac2db235::t_470e5d5d7714ba 1
+inference-server/src/inference_server/scheduler/queue.py
+  s_633a4eac2db235::t_470e5d5d7714ba 1-82
+inference-server/src/inference_server/scheduler/config.py
+  s_633a4eac2db235::t_470e5d5d7714ba 1-17
+pyproject.toml
+  s_633a4eac2db235::t_a50495315a11f0 2
+inference-server/src/inference_server/scheduler/events.py
+  s_633a4eac2db235::t_470e5d5d7714ba 1-49
+inference-server/src/inference_server/scheduler/scheduler.py
+  s_633a4eac2db235::t_470e5d5d7714ba 1-33,39-273
+  s_633a4eac2db235::t_d7b4dc3d45fa9a 34-38
+inference-server/src/inference_server/scheduler/store.py
+  s_633a4eac2db235::t_d7b4dc3d45fa9a 15
+  s_633a4eac2db235::t_470e5d5d7714ba 1-14,16-67
+inference-server/src/inference_server/scheduler/schemas.py
+  s_633a4eac2db235::t_470e5d5d7714ba 1-51
+inference-server/pyproject.toml
+  s_633a4eac2db235::t_7c9d63551ccacf 21-22,25-27
+  s_633a4eac2db235::t_31633ea39a60ae 28
+uv.lock
+  s_633a4eac2db235::t_13a06b14aaadd2 13,208-209,222-226,756-884,886,888-891,901-903,907
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "6fa7dbebb3d83cd3ea391f8711e3b58de2810d35",
+  "prompts": {},
+  "sessions": {
+    "s_633a4eac2db235": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_00b48a0d1ffeA9gZlN1PE6kMBh",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
