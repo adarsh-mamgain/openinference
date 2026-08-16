@@ -152,6 +152,17 @@ call them. This server does that with a real model:
    the conversation as a `role: tool` message.
 4. The model answers based on the result (bounded by a turn budget).
 
+## Next: hardening (this month)
+
+The server works end-to-end. Current focus is turning it into a system you can
+measure and optimize — see [`../ROADMAP.md`](../ROADMAP.md) and
+[`../ARCHITECTURE.md`](../ARCHITECTURE.md):
+
+- Metrics & `GET /metrics` (TTFT / TPOT / ITL / throughput)
+- `benchmarks/` harness vs baseline
+- Continuous batching + KV / prefix caching
+- Router engine + quantization sweep
+
 ## Concepts learned
 
 - **HTTP + FastAPI** — request/response modeling, dependency injection
