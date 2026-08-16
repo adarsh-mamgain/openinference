@@ -1,0 +1,45 @@
+docs/notes/kv-cache-prefill-decode.md
+  s_1da3e86b599fe2::t_d6469c2762be1a 1-58
+scheduler/tests/test_admission.py
+  s_1da3e86b599fe2::t_2f129febafefa1 92-126
+  s_1da3e86b599fe2::t_46ed6e6a8ac06d 1-5,7-9,12-91
+  s_1da3e86b599fe2::t_c987ee0d9c4c3f 6,10-11
+inference-server/src/inference_server/routers/chat.py
+  s_1da3e86b599fe2::t_4d1a161c2157ab 51-70,72
+  s_1da3e86b599fe2::t_0ceb1591f8ceba 109
+  s_1da3e86b599fe2::t_fde6863f7218f1 16,30
+docs/benchmarks/batching-vs-baseline.md
+  s_1da3e86b599fe2::t_df9f0f347a40cd 1-81
+scheduler/tests/test_scheduler.py
+  s_1da3e86b599fe2::t_3d2cdf79d92cda 105
+todo.md
+  s_1da3e86b599fe2::t_bc8cf2272a5a98 33
+  s_1da3e86b599fe2::t_f4f7602a687552 24-32,34-40
+scheduler/src/scheduler/schemas.py
+  s_1da3e86b599fe2::t_74f4cb1f2eda90 35-43
+inference-server/.env.example
+  s_1da3e86b599fe2::t_ca992cf93e9861 23
+scheduler/src/scheduler/config.py
+  s_1da3e86b599fe2::t_42fd0b86b40c34 15-16
+scheduler/src/scheduler/scheduler.py
+  s_1da3e86b599fe2::t_a80a900d5a22ad 37-42,56,60
+  s_1da3e86b599fe2::t_032ad2737d9d39 272-273
+  s_1da3e86b599fe2::t_322503f72c47fb 95-105,123-131
+  s_1da3e86b599fe2::t_54137e4b6e949c 132
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "3f20f64100023a2a182f40df9b1b55b8274ac9d9",
+  "prompts": {},
+  "sessions": {
+    "s_1da3e86b599fe2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_000e85218ffe1uqsyMECvYOYi2",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
