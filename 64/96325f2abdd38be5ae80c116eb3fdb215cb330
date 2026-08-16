@@ -1,0 +1,72 @@
+scheduler/tests/test_metrics.py
+  s_1da3e86b599fe2::t_6ac82201340925 86
+  s_1da3e86b599fe2::t_3bae7c279c78cc 1-2,6-11,13-78,84-85,87-100,105-108,111-112
+  s_1da3e86b599fe2::t_a7ed219b71e31c 3-4
+  s_1da3e86b599fe2::t_6294f477ea91ea 5
+  s_1da3e86b599fe2::t_faa8701dd04ca3 12
+  s_1da3e86b599fe2::t_fa4ae996b71f59 79-83,101-104,109-110,113
+docs/benchmarks/baseline.md
+  s_1da3e86b599fe2::t_00315fdadd3eb6 1-95
+inference-server/src/inference_server/main.py
+  s_1da3e86b599fe2::t_ad8dff2f815c07 55-68,75-78
+  s_1da3e86b599fe2::t_b6daa7c5d63dd9 3,6,12
+  s_1da3e86b599fe2::t_85c73140d7d8f1 79-80
+benchmarks/README.md
+  s_1da3e86b599fe2::t_565dfb11397ea5 37,43-44,51-58
+  s_1da3e86b599fe2::t_5fbfac1abbb7b6 1-36,38-42,45-50
+scheduler/tests/test_bench.py
+  s_1da3e86b599fe2::t_6e87d1b087b92d 1-7,9-31,40-49,51-69,71-74
+  s_1da3e86b599fe2::t_5451a49d347194 8,32-39,50,70
+pyproject.toml
+  s_1da3e86b599fe2::t_1b69d30c7fa6e0 2
+inference-server/src/inference_server/metrics.py
+  s_1da3e86b599fe2::t_dca65e599118cb 84-96
+  s_1da3e86b599fe2::t_e5274773216a17 1-83,97-160
+scheduler/tests/test_rate_limit.py
+  s_1da3e86b599fe2::t_bbcc3757c4c41e 1-28
+todo.md
+  s_1da3e86b599fe2::t_a9d8d2df814a2b 13-21
+benchmarks/src/benchmarks/run.py
+  s_1da3e86b599fe2::t_c7d9c5f88d3257 196,214-217
+  s_1da3e86b599fe2::t_ba781c94c641f3 52
+  s_1da3e86b599fe2::t_ef6b0af6f7ffe7 74-76,114-118
+  s_1da3e86b599fe2::t_0c54340eb3a1e9 68-73,77-113,119-123
+  s_1da3e86b599fe2::t_4b8d83c8b9d13e 142,149
+  s_1da3e86b599fe2::t_27380ed694b9ed 209-211
+  s_1da3e86b599fe2::t_da96b9dcab923b 143-148
+  s_1da3e86b599fe2::t_1ec45d92007e59 49-51
+  s_1da3e86b599fe2::t_24d41f4cd81921 53-55,65-67
+  s_1da3e86b599fe2::t_e65cf4d0c056de 124-126,139-141
+  s_1da3e86b599fe2::t_b4e167174a4539 150-152,193-195
+  s_1da3e86b599fe2::t_01f894b4f5400e 197-199,206-208
+  s_1da3e86b599fe2::t_dd86ae1957449a 212-213
+  s_1da3e86b599fe2::t_419277c9168aec 218-220
+inference-server/src/inference_server/routers/chat.py
+  s_1da3e86b599fe2::t_df7a8d3866231f 21
+  s_1da3e86b599fe2::t_8f9a0ea7625131 116-117,119-126
+  s_1da3e86b599fe2::t_f43f7a348fc80e 63-65
+  s_1da3e86b599fe2::t_ac41917e9ffa09 92
+  s_1da3e86b599fe2::t_4d795809f8d46c 160-165
+benchmarks/pyproject.toml
+  s_1da3e86b599fe2::t_95dd6a536018c2 1-22
+.gitignore
+  s_1da3e86b599fe2::t_6329afa11e7eee 1-20
+uv.lock
+  s_1da3e86b599fe2::t_fcb3f1bdf7efd7 12,49-71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "6496325f2abdd38be5ae80c116eb3fdb215cb330",
+  "prompts": {},
+  "sessions": {
+    "s_1da3e86b599fe2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_000e85218ffe1uqsyMECvYOYi2",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
