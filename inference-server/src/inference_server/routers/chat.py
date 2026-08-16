@@ -18,6 +18,7 @@ from fastapi.responses import StreamingResponse
 
 from inference_server.exceptions import ModelUnavailableError
 from inference_server.llm import model
+from inference_server.metrics import metrics
 from inference_server.schemas import (
     ChatCompletionChoice,
     ChatCompletionRequest,
@@ -59,7 +60,9 @@ async def _non_streaming_chat_completion(request: ChatCompletionRequest) -> Chat
     if completion_text.startswith("error:"):
         raise ModelUnavailableError(completion_text)
 
-    return _build_response(request, completion_text)
+    response = _build_response(request, completion_text)
+    _record_tokens(request, response)
+    return response
 
 
 def _build_response(
@@ -86,6 +89,7 @@ def _build_response(
 
 async def _stream_chat_completion(request: ChatCompletionRequest) -> StreamingResponse:
     """Stream the model's output as token-level SSE chunks."""
+    dispatched_at = time.monotonic()
     job = await scheduler.submit_chat(
         messages=[m.model_dump(exclude_none=True) for m in request.messages],
         max_tokens=request.max_tokens,
@@ -109,7 +113,17 @@ async def _stream_chat_completion(request: ChatCompletionRequest) -> StreamingRe
         }
         yield _sse_format(first)
 
+        emitted_tokens = 0
+        prev_token_time = time.monotonic()
         async for delta in scheduler.subscribe_stream(job.id):
+            now = time.monotonic()
+            if emitted_tokens == 0:
+                metrics.record_ttft(now - dispatched_at)
+            else:
+                metrics.record_inter_token(now - prev_token_time)
+            emitted_tokens += 1
+            prev_token_time = now
+
             payload = {
                 "id": completion_id,
                 "object": "chat.completion.chunk",
@@ -143,3 +157,9 @@ async def _stream_chat_completion(request: ChatCompletionRequest) -> StreamingRe
 def _sse_format(data: dict) -> str:
     """Serialize a chunk into the `data: <json>` SSE wire format."""
     return f"data: {json.dumps(data)}\n\n"
+
+
+def _record_tokens(request: ChatCompletionRequest, response: ChatCompletionResponse) -> None:
+    """Push token usage from a non-streaming response into the metrics."""
+    usage = response.usage
+    metrics.record_tokens(usage.prompt_tokens, usage.completion_tokens)

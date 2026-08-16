@@ -10,11 +10,15 @@ Legend: `[x]` done · `[ ]` next · `[-]` deferred past the month
 ## Month 1 — Harden the inference server (4 weeks)
 
 ### Week 1 — Metrics, observability & benchmark harness
-- [ ] 1. `metrics/` package: TTFT, TPOT, ITL, latency, tokens, counters
-- [ ] 2. `GET /metrics` endpoint (p50/p95/p99 windows)
-- [ ] 3. `benchmarks/` concurrency-ramp harness (stream + non-stream)
-- [ ] 4. Verify rate limiting under load; note impact
-- [ ] 5. `docs/benchmarks/baseline.md` — honest starting numbers
+- [x] 1. `metrics` module: TTFT, ITL, latency, tokens, counters, percentiles
+      (`inference-server/src/inference_server/metrics.py`)
+- [x] 2. `GET /metrics` endpoint (p50/p95/p99 windows) + middleware timing
+- [x] 3. `benchmarks/` concurrency-ramp harness (workspace package: stream +
+      non-stream, reports latency/TTFT/ITL/throughput + server metrics)
+- [x] 4. Verify rate limiting under load; note impact (unit tests +
+      `by_status` in metrics)
+- [x] 5. `docs/benchmarks/baseline.md` — honest starting numbers (headline:
+      single-client streaming is fine; concurrency collapses)
 
 ### Week 2 — Continuous batching & KV caching
 - [ ] 6. Batch multiple queued jobs into one model call
