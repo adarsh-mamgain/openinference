@@ -102,7 +102,7 @@ async def test_fifo_among_equal_priorities(fake_model_factory):
 @pytest.mark.asyncio
 async def test_bounded_concurrency(fake_model_factory):
     fake = fake_model_factory(delay=0.2)
-    sched = Scheduler(num_workers=2)
+    sched = Scheduler(num_workers=2, max_in_flight=10)
     await sched.start()
     try:
         jobs = [await sched.submit_chat([user(f"j{i}")], priority=0) for i in range(5)]

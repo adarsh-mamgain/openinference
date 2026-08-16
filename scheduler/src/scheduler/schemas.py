@@ -32,6 +32,15 @@ class JobSubmitRequest(BaseModel):
     stream: bool = Field(default=False, description="Emit token deltas to the subscriber")
 
 
+class AdmissionRejectedError(Exception):
+    """Raised by ``submit_chat`` when the system is already at capacity.
+
+    The caller (the HTTP router) should translate this into a 503 so the client
+    knows the server is overloaded rather than hanging or one request starving
+    the others. This is admission control: reject early, before the box drowns.
+    """
+
+
 class Job(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 

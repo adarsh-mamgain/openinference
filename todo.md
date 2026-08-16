@@ -21,12 +21,23 @@ Legend: `[x]` done · `[ ]` next · `[-]` deferred past the month
       single-client streaming is fine; concurrency collapses)
 
 ### Week 2 — Continuous batching & KV caching
-- [ ] 6. Batch multiple queued jobs into one model call
-- [ ] 7. Continuous-batching semantics (mid-stream add/remove)
-- [ ] 8. Prefix caching across requests
-- [ ] 9. Study `scratch-inference/kv_cache.py` (prefill vs decode)
-- [ ] 10. Re-baseline; write `docs/benchmarks/batching-vs-baseline.md`
-- [ ] 11. Admission control (protect the box under overload)
+- [x] 6. Batch multiple queued jobs into one model call
+- [ ] 7. Continuous-batching semantics (mid-stream add/remove) — **blocked** on a
+      runtime change (high-level llama-cpp manages a per-request KV cache; no
+      multi-sequence API). Documented, not faked.
+- [ ] 8. Prefix caching across requests — **assessed**; same runtime blocker.
+      See `docs/benchmarks/batching-vs-baseline.md`.
+- [x] 9. Study `scratch-inference/kv_cache.py` (prefill vs decode) → notes at
+      `docs/notes/kv-cache-prefill-decode.md`
+- [x] 10. Re-baseline with admission control; write `docs/benchmarks/batching-vs-baseline.md`
+- [x] 11. Admission control (protect the box under overload) — `MAX_IN_FLIGHT`
+      capacity; rejects excess with 503 + `Retry-After`. Live-verified: 8
+      concurrent → 2 accepted, 6 cleanly rejected.
+> **Week-2 outcome:** admission control (A1) is the shipped, verifiable win — the
+> box no longer drowns under load. Token-level continuous batching (B1/B2) and
+> prefix caching (B3) are *deliberately* documented as blocked on switching to a
+> runtime that exposes multi-sequence decode, rather than building a fake batch
+> layer.
 
 ### Week 3 — Router, quantization & evidence write-ups
 - [ ] 12. `router/` package: cost/latency/quality-aware selection + fallback

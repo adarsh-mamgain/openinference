@@ -34,7 +34,12 @@ from inference_server.tools import (
 from scheduler.config import settings
 from scheduler.events import END, StreamBus
 from scheduler.queue import PriorityQueue, QueueItem
-from scheduler.schemas import Job, JobStatus, JobSubmitRequest
+from scheduler.schemas import (
+    AdmissionRejectedError,
+    Job,
+    JobStatus,
+    JobSubmitRequest,
+)
 from scheduler.store import JobStore
 
 logger = logging.getLogger(__name__)
@@ -48,9 +53,11 @@ class Scheduler:
         self,
         num_workers: int = settings.num_workers,
         max_queue_size: int = settings.max_queue_size,
+        max_in_flight: int = settings.max_in_flight,
     ) -> None:
         self.num_workers = num_workers
         self.max_queue_size = max_queue_size
+        self.max_in_flight = max_in_flight
         self.store = JobStore()
         self.queue = PriorityQueue(maxsize=self.max_queue_size)
         self.bus = StreamBus()
@@ -85,7 +92,17 @@ class Scheduler:
         tools: list[dict] | None = None,
         stream: bool = False,
     ) -> Job:
-        """Create and enqueue a chat-completion job; returns immediately."""
+        """Create and enqueue a chat-completion job; returns immediately.
+
+        Raises :class:`AdmissionRejectedError` when the server is already at
+        capacity (``queued + in_flight >= max_in_flight``), so the caller can
+        surface an overloaded response instead of letting the request starve.
+        """
+        if not self.can_admit():
+            raise AdmissionRejectedError(
+                f"Server at capacity ({self.in_flight + self.queue.qsize()}/"
+                f"{self.max_in_flight} jobs). Try again shortly."
+            )
         request = JobSubmitRequest(
             messages=[
                 ChatMessage(**m) if isinstance(m, dict) else m for m in messages
@@ -102,6 +119,16 @@ class Scheduler:
         self._seq += 1
         await self.queue.put(QueueItem(priority=job.priority, seq=seq, job_id=job.id))
         return job
+
+    def can_admit(self) -> bool:
+        """Whether the system can accept a new job without exceeding capacity.
+
+        ``in_flight`` counts jobs a worker has picked up but not finished;
+        ``queue.qsize()`` counts queued jobs. Their sum is how much work the
+        system is currently committed to. When it reaches ``max_in_flight`` we
+        stop admitting (answer 503) rather than letting the box drown.
+        """
+        return self.in_flight + self.queue.qsize() < self.max_in_flight
 
     def job(self, job_id: str) -> Job | None:
         return self.store.get(job_id)
@@ -242,6 +269,8 @@ class Scheduler:
             "queue_size": self.queue_size,
             "in_flight": self.in_flight,
             "workers": self.num_workers,
+            "capacity": self.max_in_flight,
+            "can_admit": self.can_admit(),
         }
 
     async def __aenter__(self) -> "Scheduler":

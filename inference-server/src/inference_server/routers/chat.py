@@ -13,7 +13,7 @@ import json
 import time
 import uuid
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
 
 from inference_server.exceptions import ModelUnavailableError
@@ -27,6 +27,7 @@ from inference_server.schemas import (
     Usage,
 )
 from scheduler.scheduler import scheduler
+from scheduler.schemas import AdmissionRejectedError
 
 router = APIRouter()
 
@@ -47,13 +48,28 @@ async def create_chat_completion(
     return await _non_streaming_chat_completion(request)
 
 
+async def _submit_job(
+    request: ChatCompletionRequest, stream: bool
+) -> "Job":
+    """Submit a request to the scheduler, translating admission rejection into a 503."""
+    try:
+        return await scheduler.submit_chat(
+            messages=[m.model_dump(exclude_none=True) for m in request.messages],
+            max_tokens=request.max_tokens,
+            tools=request.tools,
+            priority=0,
+            stream=stream,
+        )
+    except AdmissionRejectedError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+            headers={"Retry-After": "2"},
+        ) from exc
+
+
 async def _non_streaming_chat_completion(request: ChatCompletionRequest) -> ChatCompletionResponse:
-    job = await scheduler.submit_chat(
-        messages=[m.model_dump(exclude_none=True) for m in request.messages],
-        max_tokens=request.max_tokens,
-        tools=request.tools,
-        priority=0,
-    )
+    job = await _submit_job(request, stream=False)
     await job.done.wait()
 
     completion_text = job.result or ""
@@ -90,13 +106,7 @@ def _build_response(
 async def _stream_chat_completion(request: ChatCompletionRequest) -> StreamingResponse:
     """Stream the model's output as token-level SSE chunks."""
     dispatched_at = time.monotonic()
-    job = await scheduler.submit_chat(
-        messages=[m.model_dump(exclude_none=True) for m in request.messages],
-        max_tokens=request.max_tokens,
-        tools=request.tools,
-        priority=0,
-        stream=True,
-    )
+    job = await _submit_job(request, stream=True)
     completion_id = f"chatcmpl-{uuid.uuid4().hex[:24]}"
     created = int(time.time())
 

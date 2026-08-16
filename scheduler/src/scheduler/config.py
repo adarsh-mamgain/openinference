@@ -12,6 +12,8 @@ class Settings(BaseSettings):
 
     num_workers: int = 2  # how many jobs generate concurrently
     max_queue_size: int = 1000  # backpressure limit; submit blocks when full
+    max_in_flight: int = 4  # admission control: reject submits beyond this
+                            # (queued + running) so the box never drowns
 
 
 settings = Settings()
