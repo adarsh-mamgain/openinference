@@ -188,6 +188,26 @@ embedding_model = EmbeddingModel(
 )
 
 
+
+# Cached LocalModel instances for additional local routes (e.g. quantized
+# siblings served by the router). Each is keyed by its GGUF path so the same
+# file is never loaded twice. Instances are created lazily (weights load on
+# first use), so registering routes at boot is cheap.
+_route_models: dict[str, LocalModel] = {}
+
+
+def get_route_model(model_path: str) -> LocalModel:
+    """Return a cached LocalModel for a route's GGUF, or the default model."""
+    if model_path == settings.model_path:
+        return model
+    if model_path not in _route_models:
+        _route_models[model_path] = LocalModel(
+            model_path=model_path,
+            n_ctx=settings.model_ctx,
+            n_threads=settings.model_threads,
+        )
+    return _route_models[model_path]
+
 def use_real_model() -> bool:
     """Whether the local chat model file is present and should be used."""
     return settings.model_backend == "local" and model.available

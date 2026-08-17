@@ -29,5 +29,8 @@ class Settings(BaseSettings):
     embedding_model_identifier: str = "nomic-embed-text-v1.5"
     embedding_model_ctx: int = 512
 
+    # Router: maximum fallback attempts when the primary route fails.
+    router_max_fallbacks: int = 2
+
 
 settings = Settings()

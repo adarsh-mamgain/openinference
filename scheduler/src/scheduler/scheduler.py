@@ -30,7 +30,6 @@ from inference_server.tools import (
     run_tool,
     tool_result_message,
 )
-
 from scheduler.config import settings
 from scheduler.events import END, StreamBus
 from scheduler.queue import PriorityQueue, QueueItem
@@ -64,6 +63,25 @@ class Scheduler:
         self.in_flight = 0
         self._seq = 0
         self._workers: list[asyncio.Task] = []
+        self._model_registry: dict[str, object] = {}
+
+    def register_model(self, model_name: str, model_instance: object) -> None:
+        """Bind a model instance to a route/model id so jobs execute on it.
+
+        Jobs are created with a ``model`` field (the routed model id). Workers
+        resolve the execution backend through this registry, falling back to the
+        default ``inference_server.llm.model`` when no entry is registered. This
+        is what makes multi-model routing real instead of cosmetic.
+        """
+        self._model_registry[model_name] = model_instance
+
+    def unregister_model(self, model_name: str) -> None:
+        """Remove a registered model, restoring the default backend for that id."""
+        self._model_registry.pop(model_name, None)
+
+    def _resolve_model(self, model_name: str) -> object:
+        """Return the model instance registered for a model id, else the default."""
+        return self._model_registry.get(model_name, model)
 
     async def start(self) -> None:
         """Spawn the worker tasks. Idempotent."""
@@ -209,23 +227,28 @@ class Scheduler:
     async def _execute(self, job: Job) -> None:
         messages: list[ChatMessage] = job.messages
         max_tokens = job.max_tokens or DEFAULT_MAX_TOKENS
+        exec_model = self._resolve_model(job.model)
 
         if job.stream:
-            await self._stream(job, messages, max_tokens)
+            await self._stream(job, messages, max_tokens, exec_model)
             return
 
         content = await asyncio.to_thread(
-            self._generate_with_tools, messages, max_tokens, job.tools
+            self._generate_with_tools, exec_model, messages, max_tokens, job.tools
         )
         self.store.set_result(job.id, content or "")
 
     def _generate_with_tools(
-        self, messages: list[ChatMessage], max_tokens: int, tools: list[dict] | None
+        self,
+        exec_model: object,
+        messages: list[ChatMessage],
+        max_tokens: int,
+        tools: list[dict] | None,
     ) -> str:
         """Model-driven tool-calling loop. Returns the final assistant content."""
         tools = tools or TOOL_SCHEMAS
         for _ in range(MAX_TOOL_TURNS):
-            content, tool_calls, _finish = model.generate(messages, max_tokens, tools)
+            content, tool_calls, _finish = exec_model.generate(messages, max_tokens, tools)
             if tool_calls:
                 for call in tool_calls:
                     result = run_tool(call)
@@ -243,10 +266,10 @@ class Scheduler:
             return content or ""
         raise RuntimeError("Tool-calling loop exceeded its turn budget")
 
-    async def _stream(self, job: Job, messages: list[ChatMessage], max_tokens: int) -> None:
+    async def _stream(self, job: Job, messages: list[ChatMessage], max_tokens: int, exec_model: object) -> None:
         """Generate token deltas and fan them out to the job's subscribers."""
         self.bus.create(job.id)
-        chunks: Iterator[str] = model.stream(messages, max_tokens, job.tools)
+        chunks: Iterator[str] = exec_model.stream(messages, max_tokens, job.tools)
         collected: list[str] = []
         try:
             while True:
