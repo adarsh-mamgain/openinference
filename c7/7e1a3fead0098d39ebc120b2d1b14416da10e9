@@ -1,0 +1,26 @@
+docs/x-thread.md
+  s_1da3e86b599fe2::t_31e62bee3bfe53 1-137
+docs/explainer.md
+  s_1da3e86b599fe2::t_a43a1f690951c1 1-354,388,391-399,403-407
+  s_1da3e86b599fe2::t_be45a0a0731160 408-410
+  s_1da3e86b599fe2::t_eae0fd4314a162 389-390
+  s_1da3e86b599fe2::t_231af28e593ca0 355-387
+  s_1da3e86b599fe2::t_d68840ab175ddb 401-402
+  s_1da3e86b599fe2::t_14738cea401bc5 400
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "c77e1a3fead0098d39ebc120b2d1b14416da10e9",
+  "prompts": {},
+  "sessions": {
+    "s_1da3e86b599fe2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_000e85218ffe1uqsyMECvYOYi2",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
