@@ -1,0 +1,32 @@
+docs/benchmarks/quant-sweep.md
+  s_1da3e86b599fe2::t_45481a15166c92 1-87
+benchmarks/src/benchmarks/sweep.py
+  s_1da3e86b599fe2::t_b197504f47cf4c 94
+  s_1da3e86b599fe2::t_d23ee4eac8a240 1-69,71,104-107,115-116,118-129,134-206
+  s_1da3e86b599fe2::t_beb1475893e10f 70,72-79,81,95-97,100-103
+  s_1da3e86b599fe2::t_053fc7d9171e3d 108-114,130-133
+  s_1da3e86b599fe2::t_3fcdd16ecc684b 92
+  s_1da3e86b599fe2::t_c7ad13ba4db711 80,98-99
+  s_1da3e86b599fe2::t_d397ad2be3a0ae 82-91,93
+  s_1da3e86b599fe2::t_29f7589b9e5599 117
+benchmarks/src/benchmarks/run.py
+  s_1da3e86b599fe2::t_c897a25ef44df7 67,78,85
+benchmarks/README.md
+  s_1da3e86b599fe2::t_f407824711a3e7 59-66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "bfbfca03f63abbce80e24d7db7c7d8750a964b6f",
+  "prompts": {},
+  "sessions": {
+    "s_1da3e86b599fe2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_000e85218ffe1uqsyMECvYOYi2",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
