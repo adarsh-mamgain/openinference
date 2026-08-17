@@ -1,0 +1,38 @@
+ROADMAP.md
+  s_1da3e86b599fe2::t_aa3bb3b422f8db 109,111,114
+  s_1da3e86b599fe2::t_20a403d6676fd0 89-90
+  s_1da3e86b599fe2::t_154c82225912ef 85-86
+docs/evidence/fde-100m-tokens-day.md
+  s_1da3e86b599fe2::t_834c4277f77b7d 1-185
+docs/notes/failure-modes.md
+  s_1da3e86b599fe2::t_9f31fd803b5a62 1-50
+docs/benchmarks/final-report.md
+  s_1da3e86b599fe2::t_6f8bd25ace5805 1-115
+ARCHITECTURE.md
+  s_1da3e86b599fe2::t_fed7052a6e77be 57-60
+  s_1da3e86b599fe2::t_923df746e4f3a2 160-164
+  s_1da3e86b599fe2::t_b259f51b848f22 67-83,88-95
+todo.md
+  s_1da3e86b599fe2::t_35cb2d4ec5d19d 54-56
+  s_1da3e86b599fe2::t_dc7f0e28554118 43-49
+  s_1da3e86b599fe2::t_c5b123bc988678 68-70
+  s_1da3e86b599fe2::t_a130a6bbe6c4e4 50-53
+  s_1da3e86b599fe2::t_e2813a5a539848 64-67,71-77
+  s_1da3e86b599fe2::t_57434591fe892d 57-61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "94ab2f2ffb05c59c8e3db29b39ba069cc5f4d004",
+  "prompts": {},
+  "sessions": {
+    "s_1da3e86b599fe2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_000e85218ffe1uqsyMECvYOYi2",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
