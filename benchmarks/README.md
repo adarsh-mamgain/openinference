@@ -56,3 +56,11 @@ connections because it can't keep up).
 > concurrency: requests that arrive while a long stream is in progress stall or
 > fail to connect. That's exactly the problem continuous batching (Week 2) is
 > meant to fix — use this harness to prove the before/after.
+
+## Quantization sweep (`python -m benchmarks.sweep`)
+
+Sweeps the same model served at multiple quantizations (auto-discovered as
+routes by the router registry) through the latency / TTFT / ITL harness, plus a
+cheap factual quality probe and on-disk GGUF size. See
+[`../docs/benchmarks/quant-sweep.md`](../docs/benchmarks/quant-sweep.md) for the
+Week-3 write-up and reproduction steps.

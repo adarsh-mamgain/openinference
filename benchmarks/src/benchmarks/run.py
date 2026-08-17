@@ -64,7 +64,7 @@ def _fmt(p: float | None, suffix: str = "ms") -> str:
     return f"{(p * 1000):.2f}{suffix}" if p is not None else "n/a"
 
 
-async def _one(client: httpx.AsyncClient) -> dict:
+async def _one(client: httpx.AsyncClient, override: dict | None = None) -> dict:
     """Send one request and return latency / TTFT / ITL / token counts.
 
     Reads the SSE body as raw bytes and stops as soon as the terminal
@@ -75,13 +75,14 @@ async def _one(client: httpx.AsyncClient) -> dict:
     Network failures under heavy load are caught and surfaced as ``error``
     samples so one stalled request doesn't abort the whole ramp.
     """
+    body = {**BODY, **(override or {})}
     start = time.perf_counter()
     ttft = None
     first = True
     deltas: list[str] = []
     buffer = ""
     try:
-        async with client.stream("POST", "/v1/chat/completions", json=BODY) as resp:
+        async with client.stream("POST", "/v1/chat/completions", json=body) as resp:
             if resp.status_code != 200:
                 body = await resp.aread()
                 return {"error": resp.status_code, "detail": body[:200].decode()}
