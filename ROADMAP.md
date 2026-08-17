@@ -82,8 +82,12 @@ which is the specific skill FDE/inference roles pay for.
 - [ ] **Q1. Structured-evidence write-ups** — publish 2 of the planned posts in
       `docs/` or your blog: (1) "I built an OpenAI-compatible LLM server from
       scratch", (2) "Why my server was N× slower than vLLM" (use real numbers).
+      *→ draft in `docs/evidence/server-from-scratch.md` &
+      `docs/evidence/slower-than-vllm.md`.*
 - [ ] **W1. Migration/portability** — make the model engine pluggable
       (llama.cpp / scratch) so the server isn't welded to one backend.
+      *→ shipped: `inference_server/engines.py` (`ModelEngine` + `ScratchEngine`),
+      `MODEL_BACKEND=local|scratch`.*
 
 **Definition of done:** router can answer "given this workload, which
 model/config and why"; quantization + routing benchmark notes in `docs/`.
@@ -102,9 +106,12 @@ customer. Finish with production hardening and a narrative.
 - [ ] **P1. FDE simulator mini-report** — pick one persona (e.g. an app serving
       100M tokens/day at a p95 TTFT budget) and write the architecture + tradeoff
       analysis you'd whiteboard in an interview (from `ARCHITECTURE.md` §3).
+      *→ `docs/evidence/fde-100m-tokens-day.md`.*
 - [ ] **B6. Final benchmark report** — consolidated numbers + the "why" narrative.
+      *→ `docs/benchmarks/final-report.md`.*
 - [ ] **K1. Interview readiness** — you can now answer the whiteboard prompt in
       `ARCHITECTURE.md` §3 end-to-end with real measurements backing each claim.
+      *→ readiness via `fde-100m-tokens-day.md` + `docs/explainer.md`.*
 
 **Definition of done:** a deployed, hardened server + a portfolio-grade write-up
 that reads as "I optimize production inference systems."

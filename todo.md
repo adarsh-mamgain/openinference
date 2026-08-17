@@ -40,17 +40,41 @@ Legend: `[x]` done · `[ ]` next · `[-]` deferred past the month
 > layer.
 
 ### Week 3 — Router, quantization & evidence write-ups
-- [ ] 12. `router/` package: cost/latency/quality-aware selection + fallback
-- [ ] 13. Wire router into chat router; log routing decisions
-- [ ] 14. Quantization sweep (Q4 vs Q8) for the same model
-- [ ] 15. Publish 2 evidence write-ups (see `ROADMAP.md` Q1)
-- [ ] 16. Make model engine pluggable (llama.cpp / scratch)
+- [x] 12. `router/` package: cost/latency/quality-aware selection + fallback
+      (`inference_server/router/`: `models.py`, `health.py`, `engine.py`,
+      `registry.py`; explainable decisions, per-route cooldown, `GET /v1/routes`)
+- [x] 13. Wire router into chat router; log routing decisions
+      (`routers/chat.py`: `request.model` routes across models, `X-Router-*`
+      headers, health-fed fallback retries; scheduler resolves the routed model
+      via `register_model`, making multi-model routing real)
+- [x] 14. Quantization sweep (Q4 vs Q8) for the same model
+      (`benchmarks/src/benchmarks/sweep.py`,
+      `docs/benchmarks/quant-sweep.md` — both routes live-verified, quality
+      probe + GGUF size axes, honest "probe doesn't discriminate at 0.5B")
+- [x] 15. Publish 2 evidence write-ups (see `ROADMAP.md` Q1)
+      — `docs/evidence/server-from-scratch.md` &
+      `docs/evidence/slower-than-vllm.md`
+- [x] 16. Make model engine pluggable (llama.cpp / scratch)
+      (`engines.py`: `ModelEngine` interface + `ScratchEngine` adapter;
+      `MODEL_BACKEND=local|scratch` selects the backend; scratch is a
+      reference engine — no tools, single-delta streaming, honest limits)
+      — *closes Week 3*
 
 ### Week 4 — Reliability, deployability & FDE story
-- [ ] 17. Container/Nixpacks build still green with new packages
-- [ ] 18. Failure modes: graceful shutdown, timeouts, backpressure, 503s
-- [ ] 19. FDE mini-report: the "100M tokens/day @ p95 TTFT" whiteboard
-- [ ] 20. Final benchmark report + consolidated narrative
+- [x] 17. Container/Nixpacks build still green with new packages
+      (`uv sync --no-dev --frozen` green from repo root and `inference-server/`;
+      live boot verified; no docker on this box to run the real image build)
+- [x] 18. Failure modes: graceful shutdown, timeouts, backpressure, 503s
+      — done (per-job timeout `job_timeout_seconds`, graceful drain
+      `shutdown_grace_seconds` + `close_all()` streams, bounded fallbacks;
+      catalogue at `docs/notes/failure-modes.md`, covered by 4 new tests)
+- [x] 19. FDE mini-report: the "100M tokens/day @ p95 TTFT" whiteboard
+      (`docs/evidence/fde-100m-tokens-day.md` — demand math, throughput
+      bandwidth math, the five levers, whiteboard diagram, cost honesty,
+      every claim mapped to a repo file)
+- [x] 20. Final benchmark report + consolidated narrative
+      (`docs/benchmarks/final-report.md` — all weeks' numbers, quality gates,
+      honest vLLM comparison, full reproduction commands) — *closes Month 1*
 
 ---
 

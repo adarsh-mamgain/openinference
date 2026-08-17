@@ -54,22 +54,45 @@ scheduler is not an HTTP service — the FastAPI router is the *only* API surfac
 | Auth | `auth.py` | Bearer API key |
 | Rate limiting | `rate_limit.py` | fixed-window, in memory |
 | Priority scheduling | `scheduler/` | heap + FIFO tie-break, cancel, backpressure |
+| Admission control | `scheduler/scheduler.py` | `MAX_IN_FLIGHT` capacity; 503 + `Retry-After` on overload |
+| Metrics | `metrics.py` | TTFT/ITL/latency, p50/p95/p99, status counts |
+| Router | `router/` | quality/latency/cost scoring, health cooldown, fallback |
+| Model engine (pluggable) | `engines.py`, `llm.py` | `ModelEngine` interface; llama.cpp + scratch backends |
 | Streaming bus | `scheduler/events.py` | in-process pub/sub for SSE deltas |
 | Deployment | `nixpacks.toml` | Coolify/Nixpacks, CPU-only |
 | From-scratch reference | `scratch-inference/` | BPE tokenizer, KV cache, transformer in numpy |
 
 ## 2. Known limitations today (why the target architecture exists)
 
+What was *already* shipped in the first three weeks:
+
+- **Metrics/observability (W1)** — TTFT/ITL/latency with p50/p95/p99 at
+  `GET /metrics`, plus request/error/status counters.
+- **Admission control (W2)** — `MAX_IN_FLIGHT` capacity; excess requests get a
+  clean 503 + `Retry-After` instead of hanging the box.
+- **Routing (W3)** — a `router/` engine that scores routes on quality/latency/
+  cost with health-fed cooldown and fallback; `GET /v1/routes` diagnostics.
+- **Quantization sweep (W3)** — same model served at Q4_K_M and Q8_0; the
+  sweep benchmarks quality/latency/cost per quant and feeds the router's
+  quality score.
+- **Pluggable engine (W3)** — `ModelEngine` interface behind
+  `settings.model_backend`; `local` (llama.cpp) and `scratch` (from-scratch
+  numpy) both implement it.
+
+The genuinely remaining limitations:
+
 1. **No continuous batching** — each worker holds one model context at a time
    and processes one request. Throughput is a fraction of what vLLM/SGLang get.
 2. **KV cache is per-request and not paged** — memory is allocated for the full
    context window even when a request only uses a few tokens.
-3. **No metrics/observability** — nothing exports latency (TTFT/TPOT/ITL),
-   throughput, GPU/CPU utilization, or cost per request.
-4. **No prefix caching or routing** — every request recomputes shared prefixes,
-   and there is no multi-model / multi-provider routing layer.
-5. **Single-node, CPU-only, single model** — no tensor/pipeline parallelism, no
-   quantization sweep, no admission control, no autoscaling.
+3. **No prefix caching** — every request recomputes shared prefixes.
+4. **Single-node, CPU-only** — no tensor/pipeline parallelism, no autoscaling.
+   The scratch backend is a *reference* engine (single-delta streaming, no
+   tools); the pluggable interface is the seam where a real batch-capable
+   runtime drops in.
+5. **Routing backends** — only the local llama.cpp backend executes today; the
+   `PROVIDER` route type (remote OpenAI-compatible endpoint) is defined in the
+   model but not yet wired.
 
 ## 3. Target architecture (the end-state we're building toward)
 
@@ -134,10 +157,11 @@ Highlighted components are **already built**; the rest are the month's plan.
 |----------------|--------------|------------|
 | Continuous batching | `inference-server` batching module | scheduler |
 | Paged / prefix KV cache | `inference-server` cache module | (scratch KV cache as reference) |
-| Metrics (TTFT/TPOT/ITL/etc.) | new `metrics/` package | — |
-| Benchmark harness vs vLLM/llama.cpp | `benchmarks/` | metrics |
-| Router engine | new `router/` package | models endpoint |
-| Admission control / scheduling policies | `scheduler/` | scheduler |
+| Metrics (TTFT/TPOT/ITL/etc.) | `metrics.py` | — *(shipped W1)* |
+| Benchmark harness vs vLLM/llama.cpp | `benchmarks/` | metrics *(shipped W1/W3)* |
+| Router engine | `router/` | models endpoint *(shipped W3)* |
+| Admission control / scheduling policies | `scheduler/` | scheduler *(shipped W2)* |
+| Pluggable model engine | `engines.py` | — *(shipped W3)* |
 | Evals + error analysis | new `evals/` package | models |
 
 See `todo.md` for the ordered, week-by-week tasks.
