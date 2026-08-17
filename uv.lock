@@ -228,6 +228,11 @@ dependencies = [
     { name = "uvicorn", extra = ["standard"] },
 ]
 
+[package.optional-dependencies]
+scratch = [
+    { name = "scratch-inference" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "httpx2" },
@@ -240,8 +245,10 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pydantic-settings", specifier = ">=2.14.2" },
     { name = "scheduler", editable = "scheduler" },
+    { name = "scratch-inference", marker = "extra == 'scratch'", editable = "scratch-inference" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.52.1" },
 ]
+provides-extras = ["scratch"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "httpx2" }]

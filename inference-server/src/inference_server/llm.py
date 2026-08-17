@@ -14,12 +14,16 @@ mock or echo fallback: if a model file is missing the endpoints surface a
 clear error telling the operator to run ``scripts/download-model.sh``.
 """
 
+import logging
 from pathlib import Path
 from typing import Iterator
 
 from inference_server.config import settings
+from inference_server.engines import ModelEngine
 from inference_server.exceptions import ModelUnavailableError
 from inference_server.schemas import FunctionCall, Message, ToolCall
+
+logger = logging.getLogger(__name__)
 
 
 def _require(path: str) -> "Path":
@@ -31,7 +35,7 @@ def _require(path: str) -> "Path":
     return p
 
 
-class LocalModel:
+class LocalModel(ModelEngine):
     """Thin wrapper around a llama-cpp Llama instance serving chat."""
 
     def __init__(self, model_path: str, n_ctx: int, n_threads: int) -> None:
@@ -174,20 +178,38 @@ class EmbeddingModel:
         return [item["embedding"] for item in result["data"]]
 
 
+def build_model_engine() -> ModelEngine:
+    """Build the chat model engine selected by ``settings.model_backend``.
+
+    ``"local"`` serves the llama.cpp GGUF; ``"scratch"`` serves the from-scratch
+    numpy stack. Both expose the same :class:`ModelEngine` contract, so the
+    scheduler and routers need no changes when the backend switches.
+    """
+    if settings.model_backend == "scratch":
+        from inference_server.engines import ScratchEngine
+
+        logger.info("using from-scratch model engine")
+        return ScratchEngine(
+            weight_path=settings.scratch_weight_path,
+            tokenizer_path=settings.scratch_tokenizer_path,
+            n_threads=settings.model_threads,
+            n_ctx=settings.model_ctx,
+        )
+    return LocalModel(
+        model_path=settings.model_path,
+        n_ctx=settings.model_ctx,
+        n_threads=settings.model_threads,
+    )
+
+
 # Module-level singletons shared across requests.
-model = LocalModel(
-    model_path=settings.model_path,
-    n_ctx=settings.model_ctx,
-    n_threads=settings.model_threads,
-)
+model = build_model_engine()
 
 embedding_model = EmbeddingModel(
     model_path=settings.embedding_model_path,
     n_ctx=settings.embedding_model_ctx,
     n_threads=settings.model_threads,
 )
-
-
 
 # Cached LocalModel instances for additional local routes (e.g. quantized
 # siblings served by the router). Each is keyed by its GGUF path so the same
@@ -208,6 +230,7 @@ def get_route_model(model_path: str) -> LocalModel:
         )
     return _route_models[model_path]
 
+
 def use_real_model() -> bool:
     """Whether the local chat model file is present and should be used."""
-    return settings.model_backend == "local" and model.available
+    return model.available

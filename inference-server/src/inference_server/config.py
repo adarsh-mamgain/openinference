@@ -17,12 +17,17 @@ class Settings(BaseSettings):
     rate_limit_window_seconds: int = 60
 
     # Chat model (run via llama-cpp-python). "local" loads a GGUF instruct
-    # model; the server has no mock/echo fallback.
+    # model; "scratch" loads the from-scratch numpy stack instead. The server
+    # has no mock/echo fallback.
     model_backend: str = "local"
     model_path: str = "models/qwen2.5-0.5b-instruct-q4_k_m.gguf"
     model_identifier: str = "qwen2.5-0.5b-instruct"  # id reported by /v1/models
     model_ctx: int = 512  # context window in tokens
     model_threads: int = 2  # CPU threads for inference
+
+    # From-scratch engine (only used when model_backend == "scratch").
+    scratch_weight_path: str = "models/qwen2.5-0.5b-instruct/model.safetensors"
+    scratch_tokenizer_path: str = "models/qwen2.5-0.5b-instruct/tokenizer.json"
 
     # Embedding model (dedicated GGUF that supports embedding=True).
     embedding_model_path: str = "models/nomic-embed-text-v1.5.Q8_0.gguf"
