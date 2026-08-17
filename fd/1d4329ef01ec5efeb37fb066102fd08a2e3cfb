@@ -1,0 +1,37 @@
+inference-server/src/inference_server/router/models.py
+  s_1da3e86b599fe2::t_c048ab46148042 1-10,12-37,40-41,44-73
+  s_1da3e86b599fe2::t_c33f4935b245ee 11,38-39,42-43
+inference-server/src/inference_server/router/health.py
+  s_1da3e86b599fe2::t_d026db8cc2467c 1-46,49-50,56-58,60-74
+  s_1da3e86b599fe2::t_6878a30cc8b2d7 48,51-55
+  s_1da3e86b599fe2::t_c636bbb2967f0e 47,59
+inference-server/src/inference_server/router/__init__.py
+  s_1da3e86b599fe2::t_c0591d2d46f178 1-28
+inference-server/src/inference_server/router/engine.py
+  s_1da3e86b599fe2::t_da7207b74ff190 1-24,31,49-50,59,61-188
+  s_1da3e86b599fe2::t_a6944e4cc69751 25-30,32-34,36-38,43,47-48,51-58,60
+  s_1da3e86b599fe2::t_4a0dc10f94bbc7 39-42,44-46
+  s_1da3e86b599fe2::t_1d329f78c7042b 35
+inference-server/src/inference_server/router/registry.py
+  s_1da3e86b599fe2::t_f466a5e4af344a 21-27,38
+  s_1da3e86b599fe2::t_d3edc97d356f47 1-2,9-11,14-20,28-37,39-41,62-63,68
+  s_1da3e86b599fe2::t_2b055bf06da4ef 3-8,12-13,42-61,64-67,69-103
+docs/notes/router.md
+  s_1da3e86b599fe2::t_641f7a8508bbc1 1-96
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "fd1d4329ef01ec5efeb37fb066102fd08a2e3cfb",
+  "prompts": {},
+  "sessions": {
+    "s_1da3e86b599fe2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_000e85218ffe1uqsyMECvYOYi2",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
