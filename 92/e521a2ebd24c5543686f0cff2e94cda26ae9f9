@@ -1,0 +1,43 @@
+ROADMAP.md
+  s_1da3e86b599fe2::t_aa3bb3b422f8db 109,111,114
+docs/notes/failure-modes.md
+  s_1da3e86b599fe2::t_9f31fd803b5a62 1-50
+todo.md
+  s_1da3e86b599fe2::t_e2813a5a539848 64-67,71-77
+  s_1da3e86b599fe2::t_c5b123bc988678 68-70
+scheduler/src/scheduler/config.py
+  s_1da3e86b599fe2::t_24eb538608d83e 17-20
+scheduler/tests/test_scheduler.py
+  s_1da3e86b599fe2::t_5312c08f8e4fe3 211-223,225-227,229-302
+  s_1da3e86b599fe2::t_b9521ff16cfed1 224,228
+scheduler/src/scheduler/scheduler.py
+  s_1da3e86b599fe2::t_8161da8f92fa6f 56-57,62-63
+  s_1da3e86b599fe2::t_1cc56544c05aae 100-113,117-118
+  s_1da3e86b599fe2::t_7398798a4350e6 235,237-242
+  s_1da3e86b599fe2::t_27fcaa9337bb5e 119
+scheduler/src/scheduler/events.py
+  s_1da3e86b599fe2::t_d949c0bb438200 50-54
+docs/evidence/fde-100m-tokens-day.md
+  s_1da3e86b599fe2::t_834c4277f77b7d 1-185
+docs/benchmarks/final-report.md
+  s_1da3e86b599fe2::t_6f8bd25ace5805 1-115
+docs/explainer.md
+  s_1da3e86b599fe2::t_be45a0a0731160 408-410
+  s_1da3e86b599fe2::t_d68840ab175ddb 401-402
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "92e521a2ebd24c5543686f0cff2e94cda26ae9f9",
+  "prompts": {},
+  "sessions": {
+    "s_1da3e86b599fe2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_000e85218ffe1uqsyMECvYOYi2",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
