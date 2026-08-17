@@ -1,0 +1,45 @@
+inference-server/src/inference_server/config.py
+  s_1da3e86b599fe2::t_b8bb17e0c1c12e 40-50
+inference-server/src/inference_server/routers/chat.py
+  s_1da3e86b599fe2::t_8fe2bdd9d242d2 51,56-58,60-68
+  s_1da3e86b599fe2::t_85fc47e3d72c4f 78-82
+  s_1da3e86b599fe2::t_9a9027c12030e2 84-85
+  s_1da3e86b599fe2::t_cbcea32913d4db 26
+docs/explainer.md
+  s_1da3e86b599fe2::t_27beb5d99ab063 382-399
+  s_1da3e86b599fe2::t_9597e6e5979480 416
+inference-server/src/inference_server/engines.py
+  s_1da3e86b599fe2::t_5cde9d33429664 21
+  s_1da3e86b599fe2::t_e537b3be921e71 151-185,187-272
+  s_1da3e86b599fe2::t_a14c5e7c1da51c 186
+todo.md
+  s_1da3e86b599fe2::t_bc9bcb05de1f97 95-96
+scheduler/tests/test_engines.py
+  s_1da3e86b599fe2::t_dedcc1a1ff7013 8-11,14-15,17-18,20
+  s_1da3e86b599fe2::t_590a38404d9eb7 157-292
+ROADMAP.md
+  s_1da3e86b599fe2::t_b3a80b3ed290e1 75,78,80,82,87,91-95
+docs/notes/router.md
+  s_1da3e86b599fe2::t_a0b826490b0cc1 87-91
+ARCHITECTURE.md
+  s_1da3e86b599fe2::t_dfd6bad80d93b0 93-97
+inference-server/src/inference_server/router/registry.py
+  s_1da3e86b599fe2::t_3e49ae473fe401 94-96
+  s_1da3e86b599fe2::t_253919f8031f81 55-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "a8bff856fd3eb45e8424caf88268875ff76b493d",
+  "prompts": {},
+  "sessions": {
+    "s_1da3e86b599fe2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_000e85218ffe1uqsyMECvYOYi2",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
