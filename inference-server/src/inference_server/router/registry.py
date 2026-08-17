@@ -52,6 +52,30 @@ _QUANT_QUALITY = {
 }
 
 
+def provider_route(available_check=None) -> Route | None:
+    """The provider route, if one is configured.
+
+    Reads ``settings.provider_url``; returns ``None`` when unset so local-only
+    deployments register no provider route. ``model_identifier`` defaults to the
+    remote model id (or the route id) and is what the scheduler sends as the
+    ``model`` parameter on the wire.
+    """
+    if not settings.provider_url:
+        return None
+    return Route(
+        id=settings.provider_identifier,
+        backend=RouteBackend.PROVIDER,
+        provider_url=settings.provider_url,
+        provider_api_key=settings.provider_api_key,
+        model_identifier=settings.provider_model or settings.provider_identifier,
+        quality=settings.provider_quality,
+        cost_per_1k_tokens=settings.provider_cost_per_1k_tokens,
+        latency_ms=settings.provider_latency_ms,
+        max_context=8192,
+        available_check=available_check,
+    )
+
+
 def _quant_label(path: Path) -> str | None:
     """Extract the quantization tag (e.g. ``q8_0``) from a GGUF filename."""
     match = re.search(r"-(q[0-9]_k_[ms]|q[0-9]_[0-9]|f16)\.gguf$", path.name)
@@ -67,6 +91,9 @@ def build_routes(available_check=None, extra_models_dir: str | None = None) -> l
     or a sweep against a separate directory).
     """
     routes = [default_route(available_check)]
+    provider = provider_route(available_check)
+    if provider is not None:
+        routes.append(provider)
 
     models_dir = Path(extra_models_dir or Path(settings.model_path).parent)
     base_name = Path(settings.model_path).stem  # e.g. qwen2.5-0.5b-instruct-q4_k_m

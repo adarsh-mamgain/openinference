@@ -18,6 +18,7 @@ reference stack (scratch) live right here; the server never imports a backend
 library directly.
 """
 
+import json
 import logging
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
@@ -148,3 +149,124 @@ class ScratchEngine(ModelEngine):
         content, _calls, _finish = self.generate(messages, max_tokens, tools)
         if content:
             yield content
+
+
+class ProviderEngine(ModelEngine):
+    """Adapter over an OpenAI-compatible ``/chat/completions`` HTTP endpoint.
+
+    This is what makes a ``provider`` route real: the router can delegate a
+    request to an external model — another inference-server, or a hosted
+    endpoint — instead of only serving local GGUFs. Because the scheduler calls
+    ``generate``/``stream`` from a worker thread (``asyncio.to_thread``), the
+    HTTP client here is synchronous, exactly like the local engines.
+
+    Honest limits:
+
+    * No local tokenizer — ``count_tokens*`` use a ~4-char-per-token estimate,
+      so reported usage is approximate unless the endpoint's own usage field is
+      believed instead.
+    * Network is assumed reachable when ``base_url`` is configured; availability
+      is a static config check, not a reachability probe.
+    """
+
+    _HEURISTIC_CHARS_PER_TOKEN = 4
+
+    def __init__(
+        self,
+        base_url: str,
+        *,
+        api_key: str | None = None,
+        model: str | None = None,
+        timeout_seconds: float = 30.0,
+        transport=None,
+    ) -> None:
+        import httpx2 as httpx
+
+        self._http = httpx
+        self.base_url = base_url.strip().rstrip("/")
+        self.api_key = api_key
+        self.model = model
+        self.timeout_seconds = timeout_seconds
+        self._transport = transport
+        self._client = None
+
+    def _get_client(self):
+        if self._client is None:
+            headers = {}
+            if self.api_key:
+                headers["Authorization"] = f"Bearer {self.api_key}"
+            self._client = self._http.Client(
+                base_url=self.base_url,
+                headers=headers,
+                timeout=self.timeout_seconds,
+                transport=self._transport,
+            )
+        return self._client
+
+    def _payload(self, messages: list, max_tokens: int, tools: list[dict] | None, stream: bool) -> dict:
+        payload = {
+            "model": self.model,
+            "messages": [
+                m.model_dump(exclude_none=True)
+                if hasattr(m, "model_dump")
+                else dict(m)
+                for m in messages
+            ],
+            "max_tokens": max_tokens,
+            "stream": stream,
+        }
+        if tools:
+            payload["tools"] = tools
+        return payload
+
+    @property
+    def available(self) -> bool:
+        return bool(self.base_url)
+
+    def count_tokens(self, text: str) -> int:
+        return max(1, round(len(text or "") / self._HEURISTIC_CHARS_PER_TOKEN))
+
+    def count_tokens_messages(self, messages: list) -> int:
+        return sum(self.count_tokens(m.content or "") for m in messages) + 4 * len(messages)
+
+    def generate(
+        self,
+        messages: list,
+        max_tokens: int,
+        tools: list[dict] | None = None,
+    ) -> tuple[str | None, list | None, str]:
+        response = self._get_client().post(
+            "/chat/completions",
+            json=self._payload(messages, max_tokens, tools, stream=False),
+        )
+        response.raise_for_status()
+        choice = response.json()["choices"][0]
+        message = choice.get("message", {})
+        return (
+            message.get("content"),
+            message.get("tool_calls"),
+            choice.get("finish_reason") or "stop",
+        )
+
+    def stream(
+        self,
+        messages: list,
+        max_tokens: int,
+        tools: list[dict] | None = None,
+    ) -> Iterator[str]:
+        with self._get_client().stream(
+            "POST",
+            "/chat/completions",
+            json=self._payload(messages, max_tokens, tools, stream=True),
+        ) as response:
+            response.raise_for_status()
+            for line in response.iter_lines():
+                if not line or not line.startswith("data:"):
+                    continue
+                raw = line[len("data:") :].strip()
+                if raw == "[DONE]":
+                    break
+                delta = json.loads(raw)["choices"][0].get("delta", {})
+                text = delta.get("content")
+                if text:
+                    yield text

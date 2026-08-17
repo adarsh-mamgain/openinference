@@ -90,9 +90,11 @@ The genuinely remaining limitations:
    The scratch backend is a *reference* engine (single-delta streaming, no
    tools); the pluggable interface is the seam where a real batch-capable
    runtime drops in.
-5. **Routing backends** — only the local llama.cpp backend executes today; the
-   `PROVIDER` route type (remote OpenAI-compatible endpoint) is defined in the
-   model but not yet wired.
+5. **Routing backends** — a local llama.cpp backend plus (when configured) a
+   `PROVIDER` route to any OpenAI-compatible HTTP endpoint, verified with a live
+   one-server-route-to-another test. Both execute through the same
+   `ModelEngine` contract, so routing, fallback and health tracking treat them
+   identically.
 
 ## 3. Target architecture (the end-state we're building toward)
 

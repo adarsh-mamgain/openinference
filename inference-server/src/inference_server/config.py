@@ -37,5 +37,16 @@ class Settings(BaseSettings):
     # Router: maximum fallback attempts when the primary route fails.
     router_max_fallbacks: int = 2
 
+    # Provider route: an external OpenAI-compatible endpoint (another
+    # inference-server, a hosted model, ...) exposed as a routing candidate.
+    # Leave ``provider_url`` unset for local-only routing.
+    provider_url: str | None = None
+    provider_api_key: str | None = None
+    provider_model: str | None = None  # remote model id, defaults to identifier
+    provider_identifier: str = "cloud-qwen"  # route id clients can request
+    provider_quality: float = 0.9
+    provider_cost_per_1k_tokens: float = 2.0  # USD; hosted models aren't free
+    provider_latency_ms: float = 900.0
+
 
 settings = Settings()

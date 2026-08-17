@@ -84,8 +84,11 @@ X-Router-Cost-Sensitivity: 1.0     # cheapest wins
 - Scoring weights and thresholds are sane defaults, not tuned; a real deployment
   would fit them to production traffic.
 - Health is in-process memory — a multi-node fleet would share it via a store.
-- Only the local llama.cpp backend executes today; the `PROVIDER` route type
-  (remote OpenAI-compatible endpoint) is defined in the model but not yet wired.
+- Provider reachability is a static config check (URL set), not a live probe — a
+  provider that accepts connections but is degraded will be caught by the same
+  health/outcome tracking as local routes, one failed request later.
+- Provider token counts are a ~4-char/token heuristic (no remote tokenizer); trust
+  the endpoint's own usage field for billing-grade accounting.
 
 ## Live check (real model)
 

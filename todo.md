@@ -92,6 +92,7 @@ Legend: `[x]` done · `[ ]` next · `[-]` deferred past the month
       needed to measure the Week 1-4 benchmarks only.
 - [-] **Production agent with verifiers** — deferred past Month 1.
 - [-] **Coding agent (OpenHands-style)** — deferred past Month 1.
-- [-] **LLM router** — *pulled into Week 3* as the routing engine (R1-R2).
+- [x] **LLM router** — *pulled into Week 3* as the routing engine (R1-R4), with
+      an OpenAI-compatible `PROVIDER` backend wired (live two-server test).
 - [-] **Distributed / multi-node serving** — post Month 1.
 - [-] **Monitoring / dashboards** — post Month 1.

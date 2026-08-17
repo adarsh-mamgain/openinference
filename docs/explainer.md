@@ -379,9 +379,24 @@ layers. Everything talks to a `ModelEngine` interface
 The scratch backend is the *same* code path as llama.cpp from the scheduler's
 point of view — which is exactly the point: when a batch-capable runtime
 arrives, it implements `ModelEngine` and `MODEL_BACKEND=that_runtime` flips the
-whole server onto it. The `PROVIDER` route type (remote OpenAI-compatible
-endpoint) is defined in the router model but not yet wired; it will be another
-`ModelEngine` implementation.
+whole server onto it. The `PROVIDER` route type takes the same seam one step
+further: `ProviderEngine` adapts **any OpenAI-compatible HTTP endpoint** (this
+server, a hosted model), so a request can be routed to a remote model with the
+exact same scheduler/tooling/health machinery as a local GGUF. Verified
+end-to-end by pointing one server at another (`PROVIDER_URL=...`) and watching
+`X-Router-Selected: cloud-qwen` serve a completion.
+
+```text
+        ┌───────────────────────────┐        ┌────────────────────────────┐
+        │ LocalModel (llama.cpp)    │        │ ProviderEngine (httpx)     │
+        │ GGUF, real streaming,     │        │ any OpenAI-compatible       │
+        │ tool calling, tokenizer   │        │ endpoint, same contract,    │
+        └───────────────────────────┘        │ tokens are a 4-char/tok est.│
+                                            └────────────────────────────┘
+
+   settings.model_backend = "local" | "scratch"   ← local/scratch
+   settings.provider_url / provider_model         ← + PROVIDER route
+```
 
 ---
 
@@ -398,6 +413,7 @@ endpoint) is defined in the router model but not yet wired; it will be another
 | Route registry + quant map | `inference-server/src/inference_server/router/registry.py` |
 | Model wrapper (llama.cpp) | `inference-server/src/inference_server/llm.py` |
 | Pluggable engine | `inference-server/src/inference_server/engines.py`, `llm.py::build_model_engine` |
+| Provider backend (OpenAI-compatible route) | `engines.py::ProviderEngine`, `router/registry.py::provider_route`, `PROVIDER_URL=...` |
 | Failure modes | `scheduler/src/scheduler/scheduler.py` (timeout/grace), `docs/notes/failure-modes.md` |
 | Config knobs | `inference-server/src/inference_server/config.py`, `scheduler/src/scheduler/config.py` |
 | KV / prefill-decode theory | `docs/notes/kv-cache-prefill-decode.md`, `scratch-inference/kv_cache.py` |

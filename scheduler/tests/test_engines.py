@@ -5,11 +5,19 @@ from ``settings.model_backend``, and the from-scratch adapter (honest: no tools,
 single-delta streaming, raises cleanly without weight files).
 """
 
+import asyncio
+import json
+
+import httpx2
 import pytest
 
-from inference_server.engines import ModelEngine, ScratchEngine
+from inference_server.config import settings as cfg
+from inference_server.engines import ModelEngine, ProviderEngine, ScratchEngine
 from inference_server.llm import build_model_engine, get_route_model, model
+from inference_server.router.models import RouteBackend
+from inference_server.router.registry import build_routes, provider_route
 from inference_server.schemas import Message
+from scheduler.scheduler import Scheduler
 
 
 def _fake_inference_engine(monkeypatch, text: str = "hello from scratch"):
@@ -147,3 +155,138 @@ def test_scratch_count_tokens_uses_tokenizer(tmp_path, monkeypatch):
 
     engine = ScratchEngine(str(w), str(t))
     assert engine.count_tokens("abc") == 3  # fake encode: len(text)
+
+
+# --------------------------------------------------------------------------- #
+# Provider engine (OpenAI-compatible HTTP backend)
+# --------------------------------------------------------------------------- #
+
+
+def _provider_handler(content="42", tool_calls=None, auth_header=None):
+    """Build an httpx2.MockTransport handler that speaks the OpenAI wire format."""
+
+    def handler(request):
+        if auth_header is not None:
+            assert request.headers.get("authorization") == auth_header
+        body = json.loads(request.read())
+        if body.get("stream"):
+            chunks = [
+                {"choices": [{"delta": {"content": tok}, "finish_reason": None}]}
+                for tok in ["hel", "lo"]
+            ]
+            sse = "".join("data: {}\n\n".format(json.dumps(c)) for c in chunks)
+            sse += "data: [DONE]\n\n"
+            return httpx2.Response(
+                200, text=sse, headers={"content-type": "text/event-stream"}
+            )
+        return httpx2.Response(
+            200,
+            json={
+                "choices": [
+                    {
+                        "message": {"content": content, "tool_calls": tool_calls},
+                        "finish_reason": "tool_calls" if tool_calls else "stop",
+                    }
+                ]
+            },
+        )
+
+    return handler
+
+
+def test_provider_implements_contract():
+    engine = ProviderEngine("http://provider.test")
+    for name in ("available", "count_tokens", "count_tokens_messages", "generate", "stream"):
+        assert hasattr(engine, name), f"provider engine missing {name}"
+    assert isinstance(engine, ModelEngine)
+
+
+def test_provider_available_reflects_url():
+    assert ProviderEngine("http://provider.test").available
+    assert not ProviderEngine("").available
+    assert not ProviderEngine("  ").available
+
+
+def test_provider_generate_returns_content_and_tool_calls():
+    engine = ProviderEngine(
+        "http://provider.test",
+        model="cloud",
+        transport=httpx2.MockTransport(
+            _provider_handler(content=None, tool_calls=[{"id": "call_1", "type": "function", "function": {"name": "add", "arguments": "{}"}}])
+        ),
+    )
+    content, calls, finish = engine.generate(
+        [Message(role="user", content="2+2?")], max_tokens=16, tools=[{"type": "function"}]
+    )
+    assert content is None
+    assert calls[0]["function"]["name"] == "add"
+    assert finish == "tool_calls"
+
+
+def test_provider_stream_yields_deltas():
+    engine = ProviderEngine(
+        "http://provider.test",
+        transport=httpx2.MockTransport(_provider_handler()),
+    )
+    assert list(engine.stream([Message(role="user", content="hi")], max_tokens=16)) == ["hel", "lo"]
+
+
+def test_provider_sends_bearer_token():
+    engine = ProviderEngine(
+        "http://provider.test",
+        api_key="sekrit",
+        transport=httpx2.MockTransport(_provider_handler(auth_header="Bearer sekrit")),
+    )
+    content, _calls, finish = engine.generate([Message(role="user", content="hi")], max_tokens=4)
+    assert content == "42"
+    assert finish == "stop"
+
+
+def test_provider_count_tokens_is_heuristic():
+    engine = ProviderEngine("http://provider.test")
+    assert engine.count_tokens("abcd") == 1  # ~4 chars per token
+    assert engine.count_tokens("") == 1
+    assert engine.count_tokens_messages([Message(role="user", content="abcd")]) >= 4
+
+
+def test_provider_route_registered_from_settings(monkeypatch):
+    assert provider_route() is None  # unset -> no provider route
+
+    monkeypatch.setattr(cfg, "provider_url", "http://provider.test", raising=False)
+    monkeypatch.setattr(cfg, "provider_model", "remote-qwen", raising=False)
+    monkeypatch.setattr(cfg, "provider_identifier", "cloud-qwen", raising=False)
+    route = provider_route()
+    assert route is not None
+    assert route.backend == RouteBackend.PROVIDER
+    assert route.provider_url == "http://provider.test"
+    assert route.model_identifier == "remote-qwen"  # remote model id on the wire
+    assert route.available()
+
+    routes = build_routes(available_check=lambda: model.available)
+    ids = {r.id: r.backend for r in routes}
+    assert ids.get("cloud-qwen") == RouteBackend.PROVIDER
+    monkeypatch.setattr(cfg, "provider_url", None, raising=False)
+
+
+@pytest.mark.asyncio
+async def test_provider_engine_serves_scheduler_job():
+    """A provider route registered on the scheduler executes end-to-end."""
+    engine = ProviderEngine(
+        "http://provider.test",
+        model="cloud",
+        transport=httpx2.MockTransport(_provider_handler(content="42")),
+    )
+    sched = Scheduler(num_workers=1)
+    sched.register_model("cloud-qwen", engine)
+    await sched.start()
+    try:
+        job = await sched.submit_chat(
+            [{"role": "user", "content": "2+2?"}],
+            model_name="cloud-qwen",
+            max_tokens=16,
+        )
+        await asyncio.wait_for(job.done.wait(), timeout=10)
+        assert job.status.value == "completed"
+        assert job.result == "42"
+    finally:
+        await sched.stop()

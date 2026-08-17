@@ -23,6 +23,7 @@ from fastapi import APIRouter, HTTPException, Request, Response, status
 from fastapi.responses import StreamingResponse
 
 from inference_server.config import settings
+from inference_server.engines import ProviderEngine
 from inference_server.exceptions import ModelUnavailableError
 from inference_server.llm import get_route_model, model
 from inference_server.metrics import metrics
@@ -47,13 +48,24 @@ CHUNK_DELAY_SECONDS = 0.05
 # The set of models/backends this server can route to.
 router_engine = Router(routes=build_routes(available_check=lambda: model.available))
 
-# Bind each non-default local route to a real model instance (weights load
+# Bind each non-default route to a real model instance (local weights load
 # lazily on first use), so the scheduler executes the route that was actually
 # selected. The default route is served via the scheduler's fallback to
 # ``inference_server.llm.model``, so it is deliberately not registered here.
 for _route in router_engine.routes():
-    if _route.id != settings.model_identifier and _route.backend.value == "local" and _route.model_path:
+    if _route.id == settings.model_identifier:
+        continue
+    if _route.backend.value == "local" and _route.model_path:
         scheduler.register_model(_route.id, get_route_model(_route.model_path))
+    elif _route.backend.value == "provider" and _route.provider_url:
+        scheduler.register_model(
+            _route.id,
+            ProviderEngine(
+                _route.provider_url,
+                api_key=_route.provider_api_key,
+                model=_route.model_identifier,
+            ),
+        )
 
 
 @router.post("/chat/completions", response_model=None)
@@ -63,9 +75,14 @@ async def create_chat_completion(
     raw_response: Response,
 ) -> ChatCompletionResponse | StreamingResponse:
     """Create a chat completion. Mirrors the OpenAI endpoint shape."""
-    if not model.available:
+    has_provider = any(
+        route.backend.value == "provider" and route.available()
+        for route in router_engine.routes()
+    )
+    if not model.available and not has_provider:
         raise ModelUnavailableError(
-            "Chat model not downloaded. Run `./scripts/download-model.sh` and restart."
+            "No route available. Download the chat model ("
+            "`./scripts/download-model.sh`) or configure a provider endpoint."
         )
     hints = _hints_from_headers(http_request)
     try:

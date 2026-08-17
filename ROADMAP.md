@@ -72,22 +72,27 @@ baseline; `docs/benchmarks/batching-vs-baseline.md` written.
 **Why:** routing + quantization turn raw serving into *cost/latency engineering*,
 which is the specific skill FDE/inference roles pay for.
 
-- [ ] **R1. Routing engine** — a `router/` package that selects a model/backend
+- [x] **R1. Routing engine** — a `router/` package that selects a model/backend
       per request driven by inputs (quality, latency budget, cost, context
       length, availability, health, history) with fallback + timeout + retry.
-- [ ] **R2. Wire routing into chat router** — `request.model` can route across
+- [x] **R2. Wire routing into chat router** — `request.model` can route across
       multiple served models/providers; log the routing decision + reason.
-- [ ] **R3. Compression / quantization sweep** — serve the same model at Q4 vs
+- [x] **R3. Compression / quantization sweep** — serve the same model at Q4 vs
       Q8 (and note GGUF size/memory) and benchmark quality-latency-cost deltas.
-- [ ] **Q1. Structured-evidence write-ups** — publish 2 of the planned posts in
+- [x] **Q1. Structured-evidence write-ups** — publish 2 of the planned posts in
       `docs/` or your blog: (1) "I built an OpenAI-compatible LLM server from
       scratch", (2) "Why my server was N× slower than vLLM" (use real numbers).
       *→ draft in `docs/evidence/server-from-scratch.md` &
       `docs/evidence/slower-than-vllm.md`.*
-- [ ] **W1. Migration/portability** — make the model engine pluggable
+- [x] **W1. Migration/portability** — make the model engine pluggable
       (llama.cpp / scratch) so the server isn't welded to one backend.
       *→ shipped: `inference_server/engines.py` (`ModelEngine` + `ScratchEngine`),
       `MODEL_BACKEND=local|scratch`.*
+- [x] **R4. Provider backend** — serve an external OpenAI-compatible endpoint as
+      a first-class route (this server, a hosted model, anything). Wired through a
+      `ProviderEngine` + `PROVIDER_URL/PROVIDER_API_KEY/PROVIDER_MODEL` config;
+      verified with a live A→B test (one server routing to another).
+      *→ `engines.py::ProviderEngine`, `router/models.py::ProviderEngine` route.*
 
 **Definition of done:** router can answer "given this workload, which
 model/config and why"; quantization + routing benchmark notes in `docs/`.
