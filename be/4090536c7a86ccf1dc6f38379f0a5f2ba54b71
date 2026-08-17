@@ -1,0 +1,21 @@
+docs/evidence/server-from-scratch.md
+  s_1da3e86b599fe2::t_3c113cd8b6d9aa 1-99
+docs/evidence/slower-than-vllm.md
+  s_1da3e86b599fe2::t_cc2aa075308600 1-81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "be4090536c7a86ccf1dc6f38379f0a5f2ba54b71",
+  "prompts": {},
+  "sessions": {
+    "s_1da3e86b599fe2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_000e85218ffe1uqsyMECvYOYi2",
+        "model": "deepseek-ai/DeepSeek-V4-Flash-0731"
+      },
+      "human_author": "Adarsh Mamgain <52105807+adarsh-mamgain@users.noreply.github.com>"
+    }
+  }
+}
