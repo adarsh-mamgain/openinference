@@ -47,3 +47,8 @@ class StreamBus:
         queue = self._queues.pop(job_id, None)
         if queue is not None:
             await queue.put(END)
+
+    async def close_all(self) -> None:
+        """Close every open stream (used at shutdown) so no subscriber hangs."""
+        for job_id in list(self._queues):
+            await self.close(job_id)

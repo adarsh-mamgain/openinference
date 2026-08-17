@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     max_queue_size: int = 1000  # backpressure limit; submit blocks when full
     max_in_flight: int = 4  # admission control: reject submits beyond this
                             # (queued + running) so the box never drowns
+    job_timeout_seconds: float = 120.0  # per-job ceiling; a hung generation
+                                        # fails instead of wedging a worker
+    shutdown_grace_seconds: float = 10.0  # how long stop() waits for in-flight
+                                          # jobs before cancelling them
 
 
 settings = Settings()

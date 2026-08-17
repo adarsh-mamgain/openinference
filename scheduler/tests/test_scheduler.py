@@ -208,3 +208,95 @@ async def test_streaming_publishes_deltas(fake_model_factory):
         assert job.result == "hi ping bye ping"
     finally:
         await sched.stop()
+
+
+# --------------------------------------------------------------------------- #
+# Failure modes (Week 4, item 18)
+# --------------------------------------------------------------------------- #
+
+
+class _HangingModel:
+    """Model whose generate never returns — used to prove timeouts."""
+
+    available = True
+
+    def generate(self, messages, max_tokens, tools=None):
+        threading.Event().wait(timeout=1.0)
+        return "never", None, "stop"
+
+    def stream(self, messages, max_tokens, tools=None):
+        threading.Event().wait(timeout=1.0)
+        yield "never"
+
+
+@pytest.mark.asyncio
+async def test_job_times_out_instead_of_hanging(fake_model_factory, monkeypatch):
+    """A hung generation must fail the job, not wedge a worker forever."""
+    fake = _HangingModel()
+    monkeypatch.setattr(sched_module, "model", fake)
+    sched = Scheduler(num_workers=1, job_timeout_seconds=0.2)
+    await sched.start()
+    try:
+        job = await sched.submit_chat([user("stuck")], priority=0)
+
+        await asyncio.wait_for(job.done.wait(), timeout=5.0)
+        assert job.status.value == "failed"
+        assert "timed out" in job.result
+        # The worker is free again: a fast job still goes through.
+        await sched.submit_chat([user("x")])
+        await asyncio.sleep(0.05)
+    finally:
+        await sched.stop()
+
+
+@pytest.mark.asyncio
+async def test_streaming_job_times_out_and_subscriber_releases(fake_model_factory, monkeypatch):
+    """A stalled stream must end for its subscriber, not hang the SSE reader."""
+    fake = _HangingModel()
+    monkeypatch.setattr(sched_module, "model", fake)
+    sched = Scheduler(num_workers=1, job_timeout_seconds=0.2)
+    await sched.start()
+    try:
+        job = await sched.submit_chat([user("stuck")], priority=0, stream=True)
+
+        collected = []
+        async for delta in sched.subscribe_stream(job.id):
+            collected.append(delta)
+        assert collected == []  # stream ended via timeout, no deltas
+        await job.done.wait()
+        assert job.status.value == "failed"
+    finally:
+        await sched.stop()
+
+
+@pytest.mark.asyncio
+async def test_stop_drains_in_flight_then_cancels(fake_model_factory):
+    """stop() waits for in-flight jobs (grace) before cancelling stragglers."""
+    fake = fake_model_factory(delay=0.3)  # each generate takes 300ms
+    sched = Scheduler(num_workers=1, shutdown_grace_seconds=2.0)
+    await sched.start()
+    job = await sched.submit_chat([user("slow")], priority=0)
+
+    await asyncio.sleep(0.05)  # let the worker pick it up
+    await sched.stop()  # should wait for the 300ms job to finish
+
+    assert job.status.value == "completed"
+    assert job.result == "done:slow"
+
+
+@pytest.mark.asyncio
+async def test_stop_closes_open_streams(fake_model_factory, monkeypatch):
+    """Streams left open at shutdown must release subscribers, not hang them."""
+    fake = _HangingModel()
+    monkeypatch.setattr(sched_module, "model", fake)
+    sched = Scheduler(num_workers=1, job_timeout_seconds=30.0)
+    await sched.start()
+    job = await sched.submit_chat([user("stuck")], priority=0, stream=True)
+    await asyncio.sleep(0.05)
+
+    await sched.stop()  # must close the open stream
+
+    collected = []
+    async for delta in sched.subscribe_stream(job.id):
+        collected.append(delta)
+    assert collected == []

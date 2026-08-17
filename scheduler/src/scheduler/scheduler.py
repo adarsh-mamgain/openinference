@@ -53,10 +53,14 @@ class Scheduler:
         num_workers: int = settings.num_workers,
         max_queue_size: int = settings.max_queue_size,
         max_in_flight: int = settings.max_in_flight,
+        job_timeout_seconds: float = settings.job_timeout_seconds,
+        shutdown_grace_seconds: float = settings.shutdown_grace_seconds,
     ) -> None:
         self.num_workers = num_workers
         self.max_queue_size = max_queue_size
         self.max_in_flight = max_in_flight
+        self.job_timeout_seconds = job_timeout_seconds
+        self.shutdown_grace_seconds = shutdown_grace_seconds
         self.store = JobStore()
         self.queue = PriorityQueue(maxsize=self.max_queue_size)
         self.bus = StreamBus()
@@ -93,10 +97,26 @@ class Scheduler:
         ]
 
     async def stop(self) -> None:
-        """Cancel all workers and wait for them to finish."""
+        """Stop accepting work, drain in-flight jobs, then cancel workers.
+
+        Waits up to ``shutdown_grace_seconds`` for jobs already running to
+        finish so a restart doesn't cut off generation mid-token; after the
+        grace window any still-running workers are cancelled and their streams
+        are closed so subscribers unblock instead of hanging.
+        """
+        if not self._workers:
+            return
+
+        deadline = asyncio.get_running_loop().time() + self.shutdown_grace_seconds
+        while self.in_flight > 0 and asyncio.get_running_loop().time() < deadline:
+            await asyncio.sleep(0.05)
+
         for task in self._workers:
             task.cancel()
         await asyncio.gather(*self._workers, return_exceptions=True)
+        # Any stream still open (cancelled mid-generation) must release its
+        # subscribers, not leave them awaiting a delta forever.
+        await self.bus.close_all()
         self._workers = []
 
     async def submit_chat(
@@ -212,8 +232,14 @@ class Scheduler:
         self.in_flight += 1
         self.store.set_status(job.id, JobStatus.RUNNING)
         try:
-            await self._execute(job)
+            await asyncio.wait_for(self._execute(job), timeout=self.job_timeout_seconds)
             self.store.set_status(job.id, JobStatus.COMPLETED)
+        except asyncio.TimeoutError:
+            logger.warning("job %s timed out after %.0fs", job.id, self.job_timeout_seconds)
+            self.store.set_result(job.id, f"error: timed out after {self.job_timeout_seconds:.0f}s")
+            self.store.set_status(job.id, JobStatus.FAILED)
+            if job.stream:
+                await self.bus.close(job.id)
         except Exception as exc:  # noqa: BLE001 - surface per-job failures
             logger.exception("job %s failed", job.id)
             self.store.set_result(job.id, f"error: {exc}")
